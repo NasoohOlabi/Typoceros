@@ -15,7 +15,7 @@ class StringSpans {
     private List<Span> nonWords;
     private List<Span> nonSpaces;
 
-    private final static Logger _logger = Logger.getLogger("Typoceros.log");
+    private final static Logger _logger = Logger.getLogger("Typoceros.StringSpan");
 
     public StringSpans() {
     }

@@ -13,10 +13,11 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 
 public class Typo {
-    private final static Logger _logger = Logger.getLogger("Typoceros.log");
+    private final static Logger _logger = Logger.getLogger("Typoceros.Typo");
     private String text;
     private List<Tuple3<Span, String, Pattern>> _slots = null;
     private List<Integer> _spaces = null;
+    private int span_size;
 
     public int getLength() throws IOException {
         return getSlots().size();
@@ -64,12 +65,9 @@ public class Typo {
         return getSpaces().stream().map(util::log2).collect(Collectors.toList());
     }
 
-    public Typo(String text) throws IOException {
-        _constructor(text);
-    }
-
-    public void _constructor(String text) throws IOException {
+    public Typo(String text, int span_size) throws IOException {
         this.text = text;
+        setSpanSize(span_size);
         if (!isAcceptable(this.text)) {
             throw new IllegalArgumentException("Text isn't spelled correctly");
         }
@@ -127,7 +125,7 @@ public class Typo {
             assert original.equals(test_self.text);
             t = test_self;
         } else {
-            t = new Typo(original);
+            t = new Typo(original, Config.span_size);
         }
         return new Tuple2<>(original, t._decode(text, test_self));
     }
@@ -189,7 +187,10 @@ public class Typo {
     }
 
     public int getSpanSize() {
-        Config.sync();
-        return Config.span_size;
+        return this.span_size;
+    }
+
+    public void setSpanSize(int value) {
+        this.span_size = value;
     }
 }

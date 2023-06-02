@@ -15,7 +15,7 @@ import org.junit.Test;
 import io.vavr.Tuple2;
 
 public class TypoTest {
-    private Logger _logger = Logger.getLogger("Typoceros.log");
+    private Logger _logger = Logger.getLogger("Typoceros.TypoTest");
 
     public static String generateRandomBitStream(int length, long seed) {
 
@@ -102,7 +102,7 @@ public class TypoTest {
         _logger.finest("#".repeat(25) + "\nTest String\n" + "#".repeat(25));
         _logger.finest("text='" + text + "'");
         _logger.finest("bytes='" + bytes + "'");
-        var typo = new Typo(text);
+        var typo = new Typo(text, Config.span_size);
         Timer.startTimer("testString: '" + text + "'");
         _logger.finest("typo.spaces\t" + typo.getSpaces().toString());
         Timer.prettyPrint("testString: '" + text + "'", true);
@@ -123,7 +123,7 @@ public class TypoTest {
     public void testStringExtensive(String text) throws ValueError, IOException {
         _logger.finest("#".repeat(25) + "\nTest String\n" + "#".repeat(25));
         _logger.finest("text='" + text + "'");
-        var typo = new Typo(text);
+        var typo = new Typo(text, Config.span_size);
         Timer.startTimer("testString: '" + text + "'");
         _logger.finest("typo.spaces\t" + typo.getSpaces().toString());
         Timer.prettyPrint("testString: '" + text + "'");

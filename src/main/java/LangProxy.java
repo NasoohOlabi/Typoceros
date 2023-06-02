@@ -16,7 +16,7 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 
 public class LangProxy {
-    private final static Logger _logger = Logger.getLogger("Typoceros.log");
+    private final static Logger _logger = Logger.getLogger("Typoceros.LangProxy");
 
     private final static int INTENTIONAL_TYPO_STR_DIST = 1;
 

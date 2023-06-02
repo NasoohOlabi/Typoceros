@@ -6,13 +6,13 @@ import java.util.logging.Logger;
 
 public class App {
     private static Map<String, Typo> memo = new HashMap<>();
-    private static Logger _logger = Logger.getLogger("Typoceros.log");
+    private static Logger _logger = Logger.getLogger("Typoceros.App");
 
     private static Typo getTypo(String string) throws IOException {
         if (memo.containsKey(string)) {
             return memo.get(string);
         }
-        Typo typo = new Typo(string);
+        Typo typo = new Typo(string, Config.span_size);
         memo.put(string, typo);
         return typo;
     }
@@ -24,6 +24,8 @@ public class App {
         Typo typo;
         try (Scanner scanner = new Scanner(System.in)) {
             while (true) {
+                Config.sync();
+                Config.syncLogLevels();
                 command = scanner.nextLine();
                 string = scanner.nextLine();
                 if (command.equalsIgnoreCase("encode")) {

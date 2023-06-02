@@ -3,7 +3,7 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 public class Timer {
-    private final static Logger _logger = Logger.getLogger("Typoceros.log");
+    private final static Logger _logger = Logger.getLogger("Typoceros.Timer");
 
     public static boolean PRINT = false;
     private static final Map<String, Long> startTimes = new HashMap<>();
