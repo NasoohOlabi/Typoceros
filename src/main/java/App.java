@@ -33,7 +33,7 @@ public class App {
                     System.out.println(typo.encode(values));
                     System.out.println(remainingBytes);
                 } else if (command.equalsIgnoreCase("decode")) {
-                    var originalText_values = Typo.decode(string, false, null);
+                    var originalText_values = Typo.decode(string, null);
                     var originalText = originalText_values._1();
                     var values = originalText_values._2;
                     System.out.println(originalText);

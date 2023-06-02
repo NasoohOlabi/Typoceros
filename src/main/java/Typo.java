@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -12,11 +13,10 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 
 public class Typo {
+    private final static Logger _logger = Logger.getLogger("Typoceros.log");
     private String text;
     private List<Tuple3<Span, String, Pattern>> _slots = null;
     private List<Integer> _spaces = null;
-    private boolean verbose;
-    public int span_size = 6;
 
     public int getLength() throws IOException {
         return getSlots().size();
@@ -24,7 +24,7 @@ public class Typo {
 
     public List<Tuple3<Span, String, Pattern>> getSlots() throws IOException {
         if (this._slots == null)
-            this._slots = LangProxy.valid_rules_scan(this.text, this.verbose);
+            this._slots = LangProxy.valid_rules_scan(this.text);
         return this._slots;
     }
 
@@ -32,8 +32,9 @@ public class Typo {
         if (_spaces != null) {
             return _spaces;
         }
+        var span_size = getSpanSize();
 
-        var sentenceRanges = util.chunk(text, this.span_size);
+        var sentenceRanges = util.chunk(text, span_size);
 
         // Initialize an empty list of buckets
         int numBuckets = sentenceRanges.size();
@@ -64,42 +65,33 @@ public class Typo {
     }
 
     public Typo(String text) throws IOException {
-        _constructor(text, false);
+        _constructor(text);
     }
 
-    public Typo(String text, boolean verbose) throws IOException {
-        _constructor(text, verbose);
-    }
-
-    public void _constructor(String text, boolean verbose) throws IOException {
+    public void _constructor(String text) throws IOException {
         this.text = text;
-        this.verbose = verbose;
-        if (!isAcceptable(this.text, this.verbose)) {
+        if (!isAcceptable(this.text)) {
             throw new IllegalArgumentException("Text isn't spelled correctly");
         }
     }
 
-    public boolean isAcceptable(String text, boolean verbose) throws IOException {
-        return text.equals(LangProxy.normalize(text, verbose));
+    public boolean isAcceptable(String text) throws IOException {
+        return text.equals(LangProxy.normalize(text));
     }
 
-    public String FixText(String text, boolean verbose) throws IOException {
-        return LangProxy.normalize(text, verbose);
+    public String FixText(String text) throws IOException {
+        return LangProxy.normalize(text);
     }
 
     public String apply(int space, int offset, String text) throws IOException {
-        if (this.verbose) {
-            System.out.println("apply: space=" + space + ", offset=" + offset + ", text=" + text);
-        }
+        _logger.finest("apply: space=" + space + ", offset=" + offset + ", text=" + text);
         if (offset == 0) {
             return text;
         }
         var match_tuple = this.getSlots()
                 .get(util.sum(this.getSpaces().subList(0, space)) + offset - 1);
-        var applied = LangProxy.applyMatch(text, match_tuple, this.verbose);
-        if (this.verbose) {
-            System.out.println("applied: " + applied);
-        }
+        var applied = LangProxy.applyMatch(text, match_tuple);
+        _logger.finest("applied: " + applied);
         return applied;
     }
 
@@ -123,20 +115,19 @@ public class Typo {
         return result;
     }
 
-    public static Tuple2<String, List<Integer>> decode(String text, boolean verbose, Typo test_self)
+    public static Tuple2<String, List<Integer>> decode(String text, Typo test_self)
             throws IOException {
-        String original = LangProxy.normalize(text, verbose);
-        if (verbose)
-            System.out.println("original=" + original);
+        String original = LangProxy.normalize(text);
+        _logger.finest("original=" + original);
         Typo t;
         if (test_self != null) {
             if (!original.equals(test_self.text)) {
-                System.out.println("test_self.text=\n" + test_self.text);
+                _logger.finest("test_self.text=\n" + test_self.text);
             }
             assert original.equals(test_self.text);
             t = test_self;
         } else {
-            t = new Typo(original, verbose);
+            t = new Typo(original);
         }
         return new Tuple2<>(original, t._decode(text, test_self));
     }
@@ -145,19 +136,15 @@ public class Typo {
         Typo a_self = test != null ? test : this;
         var spaces = a_self.getSpaces();
         int cnt = util.diff(text, a_self.text).size();
-        if (a_self.verbose) {
-            System.out.println("cnt=" + cnt);
-            System.out.println("util.diff('" + text + "','" + a_self.text + "')=" + util.diff(text, a_self.text));
-        }
+        _logger.finest("cnt=" + cnt);
+        _logger.finest("util.diff('" + text + "','" + a_self.text + "')=" + util.diff(text, a_self.text));
         List<Integer> values = new ArrayList<>(Collections.nCopies(spaces.size(), 0));
         for (int i = 0; i < spaces.size(); i++) {
             for (int j = 0; j < spaces.get(i); j++) {
                 var dif = util.diff(text, a_self.encode(values));
                 if (dif.size() == cnt - 1) {
-                    if (a_self.verbose) {
-                        System.out.println("values=" + values);
-                        System.out.println("dif=" + dif);
-                    }
+                    _logger.finest("values=" + values);
+                    _logger.finest("dif=" + dif);
                     cnt--;
                     break;
                 }
@@ -165,9 +152,7 @@ public class Typo {
             }
             if (Objects.equals(values.get(i), spaces.get(i))) {
                 values.set(i, 0);
-                if (a_self.verbose) {
-                    System.out.println("chunk is empty values=" + values);
-                }
+                _logger.finest("chunk is empty values=" + values);
             }
         }
         return values;
@@ -200,6 +185,11 @@ public class Typo {
     }
 
     public void learn(String text) throws IOException {
-        LangProxy.normalize(text, this.verbose, true);
+        LangProxy.normalize(text, true);
+    }
+
+    public int getSpanSize() {
+        Config.sync();
+        return Config.span_size;
     }
 }

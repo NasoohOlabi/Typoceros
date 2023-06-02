@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +14,8 @@ class StringSpans {
     private List<Span> spans;
     private List<Span> nonWords;
     private List<Span> nonSpaces;
+
+    private final static Logger _logger = Logger.getLogger("Typoceros.log");
 
     public StringSpans() {
     }
@@ -118,13 +121,13 @@ class StringSpans {
             }
         }
         if (verbose) {
-            System.out.println("expand_span_to_word(" + words + "," + span + ")=" + returnValue + "");
+            _logger.finest("expand_span_to_word(" + words + "," + span + ")=" + returnValue + "");
         }
         if (returnValue != null)
             return returnValue;
         else {
-            System.out.println("span=" + span);
-            System.out.println("words=" + words);
+            _logger.finest("span=" + span);
+            _logger.finest("words=" + words);
             throw new IllegalArgumentException("Something is wrong");
         }
     }

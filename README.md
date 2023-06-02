@@ -13,3 +13,6 @@ Steganography Using Typos. We all make misstakes
 - [X] Pass some tests
 - [ ] Double check non keyboard typos work
 - [X] migrate to java lang_tool bottle neck
+- [ ] dictionary
+- [ ] safe words
+- [X] logger

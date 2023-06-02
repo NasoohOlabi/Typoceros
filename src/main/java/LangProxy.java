@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 
 public class LangProxy {
+    private final static Logger _logger = Logger.getLogger("Typoceros.log");
 
     private final static int INTENTIONAL_TYPO_STR_DIST = 1;
 
@@ -27,7 +29,7 @@ public class LangProxy {
         return matches.isEmpty();
     }
 
-    public static String spell_word(String word, boolean verbose) throws IOException {
+    public static String spell_word(String word) throws IOException {
         if (normal_word(word)) {
             return word;
         }
@@ -35,14 +37,14 @@ public class LangProxy {
         String spellingOpt = LangProxy.langTool.check(word).get(0).getSuggestedReplacements().get(0);
         Timer.prettyPrint("spell_word " + word);
         String spelling = (spellingOpt != null) ? spellingOpt : word;
-        return word_we_misspelled(word, spelling, verbose) ? spelling : word;
+        return word_we_misspelled(word, spelling) ? spelling : word;
     }
 
     public static List<RuleMatch> check(String text) throws IOException {
         return langTool.check(text);
     }
 
-    public static boolean word_we_misspelled(String word, String spelling, boolean verbose) {
+    public static boolean word_we_misspelled(String word, String spelling) {
         int uls = util.countUppercaseLetters(word);
         if (Character.toLowerCase(spelling.charAt(0)) == Character.toLowerCase(word.charAt(0))
                 && Character.toLowerCase(spelling.charAt(spelling.length() - 1)) == Character
@@ -53,10 +55,8 @@ public class LangProxy {
             for (var entry : Rules.FAT_CORRECTION_RULES) {
                 Matcher m = entry._1.matcher(word);
                 if (!m.replaceAll(entry._2).equals(spelling)) {
-                    if (verbose) {
-                        System.out.printf("FAT_CORRECTION_RULES (%s) (%s): %s == %s\n", entry._1, entry._2,
-                                m.replaceAll(entry._2), spelling);
-                    }
+                    _logger.finest(String.format("FAT_CORRECTION_RULES (%s) (%s): %s == %s\n", entry._1, entry._2,
+                            m.replaceAll(entry._2), spelling));
                     return true;
                 }
             }
@@ -66,21 +66,19 @@ public class LangProxy {
         }
     }
 
-    public static List<RuleMatch> correction_rules_subset(String text, boolean verbose) throws IOException {
+    public static List<RuleMatch> correction_rules_subset(String text) throws IOException {
         Timer.startTimer("correction_rules_subset " + text);
         List<RuleMatch> matches = LangProxy.langTool.check(text);
         Timer.prettyPrint("correction_rules_subset " + text);
-        if (verbose) {
-            System.out.println("matches=" + matches);
-        }
+        _logger.finest("matches=" + matches);
         var subset = new ArrayList<RuleMatch>();
         for (RuleMatch match : matches) {
             if (List.of("TYPOS", "SPELLING", "GRAMMAR", "TYPOGRAPHY")
                     .contains(match.getRule().getCategory().getId().toString())) {
                 subset.add(match);
-            } else if (verbose) {
-                System.out.println("Discarded match=" + match);
-                System.out.println("Discarded match id=" + match.getRule().getCategory().getId());
+            } else {
+                _logger.finest("Discarded match=" + match);
+                _logger.finest("Discarded match id=" + match.getRule().getCategory().getId());
             }
         }
         return subset;
@@ -117,27 +115,25 @@ public class LangProxy {
         return affected_words;
     }
 
-    public static String normalize(String text, boolean verbose) throws IOException {
-        return normalize(text, verbose, false);
+    public static String normalize(String text) throws IOException {
+        return normalize(text, false);
     }
 
-    public static String normalize(String text, boolean verbose, boolean learn) throws IOException {
+    public static String normalize(String text, boolean learn) throws IOException {
         List<Span> chunks = util.chunk(text, 6);
         String to_be_original = text;
-        var offsets = correction_rules_subset(text, verbose)
+        var offsets = correction_rules_subset(text)
                 .stream()
                 .map(RuleMatch::getFromPos)
                 .collect(Collectors.toList());
         boolean[] empty_chunks = new boolean[chunks.size()];
         StringSpans text_sss = new StringSpans(text);
         List<String> affected_words = getAffectedWords(text, text_sss, offsets);
-        if (verbose) {
-            System.out.println("text=" + text);
-            System.out.println("chunks=" + chunks);
-            System.out.println("offsets=" + offsets);
-            System.out.println("text_sss.words=" + text_sss.getWords());
-            System.out.println("affected_words=" + affected_words);
-        }
+        _logger.finest("text=" + text);
+        _logger.finest("chunks=" + chunks);
+        _logger.finest("offsets=" + offsets);
+        _logger.finest("text_sss.words=" + text_sss.getWords());
+        _logger.finest("affected_words=" + affected_words);
         var offsets_chunks = new ArrayList<List<Tuple3<Integer, String, List<String>>>>();
         for (var chunk : chunks) {
             int chunk_start = chunk.start;
@@ -147,28 +143,20 @@ public class LangProxy {
                 int o = offsets.get(i);
                 if (chunk_start <= o && o < chunk_end) {
                     String affected_word = affected_words.get(i);
-                    List<String> affected_word_corrections = word_corrections(affected_word, verbose);
+                    List<String> affected_word_corrections = word_corrections(affected_word);
                     chunk_offsets.add(new Tuple3<>(o, affected_word, affected_word_corrections));
-                    if (verbose) {
-                        System.out.println("Added (" + o + ", " + affected_word + ", " + affected_word_corrections
-                                + ") to chunk_offsets");
-                    }
+                    _logger.finest("Added (" + o + ", " + affected_word + ", " + affected_word_corrections
+                            + ") to chunk_offsets");
                 }
             }
             offsets_chunks.add(chunk_offsets);
-            if (verbose) {
-                System.out.println("Added " + chunk_offsets + " to offsets_chunks");
-            }
+            _logger.finest("Added " + chunk_offsets + " to offsets_chunks");
         }
-        if (verbose) {
-            System.out.println("chunks_offsets=" + offsets_chunks);
-        }
+        _logger.finest("chunks_offsets=" + offsets_chunks);
         for (int i = 0; i < offsets_chunks.size(); i++) {
             var offsets_chunk = offsets_chunks.get(i);
             if (offsets_chunk.size() > 1) {
-                if (verbose) {
-                    System.out.println("len(" + offsets_chunk + ")=" + offsets_chunk.size() + " > 1");
-                }
+                _logger.finest("len(" + offsets_chunk + ")=" + offsets_chunk.size() + " > 1");
                 empty_chunks[i] = true;
                 if (learn) {
                     for (var x : offsets_chunk) {
@@ -177,24 +165,20 @@ public class LangProxy {
                 }
             } else if (offsets_chunk.size() == 1
                     && offsets_chunk.get(0)._3.size() == 0) {
-                if (verbose) {
-                    System.out.println(
-                            "no suggestions for " +
-                                    offsets_chunk.get(0)._2 +
-                                    " added to dict");
-                }
+                _logger.finest(
+                        "no suggestions for " +
+                                offsets_chunk.get(0)._2 +
+                                " added to dict");
                 empty_chunks[i] = true;
                 if (learn)
                     LangProxy.addWord(offsets_chunk.get(0)._2);
             } else if (offsets_chunk.size() == 1) {
                 var cs = offsets_chunk.get(0)._3;
-                if (verbose) {
-                    System.out.println("typo=" +
-                            offsets_chunk.get(0)._2 +
-                            "\nsuggestion=" +
-                            util.mode(cs));
-                    System.out.println("votes=" + cs);
-                }
+                _logger.finest("typo=" +
+                        offsets_chunk.get(0)._2 +
+                        "\nsuggestion=" +
+                        util.mode(cs));
+                _logger.finest("votes=" + cs);
                 to_be_original = to_be_original.replaceAll(
                         offsets_chunk.get(0)._2, util.mode(cs));
             } else {
@@ -205,19 +189,17 @@ public class LangProxy {
         return to_be_original;
     }
 
-    private static Optional<RuleMatch> check_pos(Span word, String text, boolean verbose) throws IOException {
+    private static Optional<RuleMatch> check_pos(Span word, String text) throws IOException {
         var check = LangProxy.check(text);
-        if (verbose) {
-            System.out.println("check result(" + word + ", " + text + "): " + check);
-        }
+        _logger.finest("check result(" + word + ", " + text + "): " + check);
         for (var rule : check) {
             var ruleSpan = Span.of(rule.getFromPos(), rule.getToPos());
             if (word.contain(ruleSpan) || word.intersects(ruleSpan)) {
                 return Optional.of(rule);
-            } else if (verbose) {
-                System.out.println(
+            } else {
+                _logger.finest(
                         "rule not related to word " + word + " Rule " + ruleSpan);
-                System.out.println(rule);
+                _logger.finest(rule.toString());
             }
         }
         return Optional.empty();
@@ -242,27 +224,22 @@ public class LangProxy {
 
     public static String vote_fix_word(
             Span word,
-            String text,
-            boolean verbose) throws IOException {
+            String text) throws IOException {
         List<String> suggestions = new ArrayList<>(10);
-        var context_suggestions = check_pos(word, text, verbose);
+        var context_suggestions = check_pos(word, text);
         context_suggestions.ifPresent(ruleMatch -> suggestions.addAll(getSuggestions(word.in(text), ruleMatch
                 .getSuggestedReplacements())));
-        if (verbose) {
-            System.out.println("\nvote_fix_word suggestions context: " + suggestions);
-        }
+        _logger.finest("\nvote_fix_word suggestions context: " + suggestions);
         suggestions.addAll(word_corrections(
-                word.in(text), verbose));
-        if (verbose) {
-            System.out.println("\nvote_fix_word suggestions context + non: " + suggestions);
-        }
+                word.in(text)));
+        _logger.finest("\nvote_fix_word suggestions context + non: " + suggestions);
         suggestions.addAll(
                 suggestions
                         .stream()
                         .flatMap((correction) -> {
                             try {
                                 var result = LangProxy.check_pos(word,
-                                        word.swap(text, correction), verbose);
+                                        word.swap(text, correction));
                                 if (result.isPresent()) {
                                     return getSuggestionsStream(word.in(text),
                                             result.get().getSuggestedReplacements());
@@ -273,27 +250,25 @@ public class LangProxy {
                                 return Stream.empty();
                             }
                         }).collect(Collectors.toList()));
-        if (verbose) {
-            System.out.println("\nvote_fix_word suggestions (context + non) tried out: " + suggestions);
-            System.out.println(suggestions);
-            if (suggestions.size() == 0) {
-                System.out.println("vote_fix_word Out of Suggestions");
-                System.out.println("Suggestions: " + suggestions);
-                System.out.println("Word: " + word);
-                System.out.println("Text: " + text);
-            }
+        _logger.finest("\nvote_fix_word suggestions (context + non) tried out: " + suggestions);
+        _logger.finest(suggestions.toString());
+        if (suggestions.size() == 0) {
+            _logger.finest("vote_fix_word Out of Suggestions");
+            _logger.finest("Suggestions: " + suggestions);
+            _logger.finest("Word: " + word);
+            _logger.finest("Text: " + text);
         }
         return util.mode(suggestions);
     }
 
-    public static List<String> word_corrections(String typo, boolean verbose) throws IOException {
+    public static List<String> word_corrections(String typo) throws IOException {
         var suggestion = spellWord(typo);
         List<String> votes = new ArrayList<>(suggestion);
         for (var rule : Rules.FAT_CORRECTION_RULES) {
             Matcher matcher = rule._1().matcher(typo);
             while (matcher.find()) {
                 var span = Span.of(matcher.start(), matcher.end());
-                votes.add(applyMatch(typo, rule, span, verbose));
+                votes.add(applyMatch(typo, rule, span));
             }
         }
         for (var rule : Rules.WORD_CORRECTION_RULES) {
@@ -306,12 +281,10 @@ public class LangProxy {
             Matcher matcher = rule._1().matcher(typo);
             while (matcher.find()) {
                 var span = Span.of(matcher.start(), matcher.end());
-                votes.add(applyMatch(typo, rule, span, verbose));
+                votes.add(applyMatch(typo, rule, span));
             }
         }
-        if (verbose) {
-            System.out.println("unfiltered votes: " + votes);
-        }
+        _logger.finest("unfiltered votes: " + votes);
         // if correction rules were false negative
         // so they tried to correct but they were wrong
         votes.removeIf(vote -> {
@@ -322,9 +295,7 @@ public class LangProxy {
                 return true;
             }
         });
-        if (verbose) {
-            System.out.println("filtered votes: " + votes);
-        }
+        _logger.finest("filtered votes: " + votes);
         return votes;
     }
 
@@ -363,54 +334,50 @@ public class LangProxy {
      * @return text with regex and repl applied to the right position aka span
      */
     public static String applyMatch(
-            String text, String repl, Pattern regex, Span span, boolean verbose) {
+            String text, String repl, Pattern regex, Span span) {
         try {
-            if (verbose) {
-                System.out.println("text='" + text + "'");
-                System.out.println("repl='" + repl + "'");
-                System.out.println("regex='" + regex + "'");
-                System.out.println("span='" + span + "'");
-                System.out.println("Before replace: " + text);
-            }
+            _logger.finest("text='" + text + "'");
+            _logger.finest("repl='" + repl + "'");
+            _logger.finest("regex='" + regex + "'");
+            _logger.finest("span='" + span + "'");
+            _logger.finest("Before replace: " + text);
 
             var replaced_text = regex.matcher(span.in(text)).replaceAll(repl);
 
             var after_replace_text = span.swap(text, replaced_text);
-            // if (verbose)
-            // System.out.println("After replace: "+after_replace_text);
 
             return after_replace_text;
         } catch (Exception exp) {
-            System.out.println("Exception in LangProxy.java:389 applyMatch");
-            System.out.println("text:(" + text + ")");
-            System.out.println("repl:(" + repl + ")");
-            System.out.println("regex:(" + regex + ")");
-            System.out.println("span:(" + span + ")");
+            _logger.finest("Exception in LangProxy.java:389 applyMatch");
+            _logger.finest("text:(" + text + ")");
+            _logger.finest("repl:(" + repl + ")");
+            _logger.finest("regex:(" + regex + ")");
+            _logger.finest("span:(" + span + ")");
             exp.printStackTrace();
             throw exp;
         }
     }
 
     public static String applyMatch(
-            String text, Tuple2<Pattern, String> rule, Span span, boolean verbose) {
+            String text, Tuple2<Pattern, String> rule, Span span) {
         var repl = rule._2;
         var regex = rule._1;
-        return applyMatch(text, repl, regex, span, verbose);
+        return applyMatch(text, repl, regex, span);
     }
 
     public static String applyMatch(
-            String text, Tuple3<Span, String, Pattern> rule, boolean verbose) {
+            String text, Tuple3<Span, String, Pattern> rule) {
         var repl = rule._2;
         var regex = rule._3;
         var span = rule._1;
-        return applyMatch(text, repl, regex, span, verbose);
+        return applyMatch(text, repl, regex, span);
     }
 
     public static void addWord(String s) {
     }
 
     public static List<Tuple3<Span, String, Pattern>> valid_matches(String text,
-            List<Tuple3<Span, String, Pattern>> slots, boolean verbose) throws IOException {
+            List<Tuple3<Span, String, Pattern>> slots) throws IOException {
         StringSpans texas = new StringSpans(text);
         List<String> mutations = new ArrayList<>(slots.size());
         for (int i = 0; i < slots.size(); i++) {
@@ -426,15 +393,12 @@ public class LangProxy {
             var relative_span = expanded._2;
             String old_word = wordSpan.in(text);
 
-            String new_word = applyMatch(old_word, repl, regex, relative_span, verbose);
+            String new_word = applyMatch(old_word, repl, regex, relative_span);
             var new_word_span = Span.of(wordSpan.start, wordSpan.start + new_word.length());
 
             String new_word_corrections_mode = vote_fix_word(
                     new_word_span,
-                    wordSpan.swap(text, new_word),
-                    verbose);
-            if (verbose)
-                System.out.println("new_word: " + new_word + " can't be fixed");
+                    wordSpan.swap(text, new_word));
             if (normal_word(old_word) &&
                     !normal_word(new_word) &&
                     Character.toLowerCase(new_word.charAt(0)) == Character.toLowerCase(old_word.charAt(0)) &&
@@ -444,10 +408,8 @@ public class LangProxy {
                     new_word_corrections_mode.equals(old_word)) {
                 mutations.set(match_index, wordSpan.swap(text, new_word));
             } else {
-                if (verbose) {
-                    System.out.println("rule undetectable or modify looks! new word \"" + new_word + "\" != \""
-                            + old_word + "\" original and will be corrected to " + new_word_corrections_mode);
-                }
+                _logger.finest("rule undetectable or modify looks! new word \"" + new_word + "\" != \""
+                        + old_word + "\" original and will be corrected to " + new_word_corrections_mode);
             }
         }
         List<Integer> ambiguous_invalid_matches = new ArrayList<>();
@@ -455,51 +417,41 @@ public class LangProxy {
             String new_string = mutations.get(i);
             if (new_string.isEmpty() ||
                     mutations.subList(0, i).contains(new_string) ||
-                    !normalize(new_string, verbose).equals(text)) {
-                if (verbose) {
-                    System.out.println("mutation '" + new_string + "' is ambiguous because");
-                    System.out.print((new_string.isEmpty()) ? "it's empty\n" : "");
-                    System.out.print(
-                            (mutations.subList(0, i).contains(new_string)) ? "previous slot yields the same typo\n"
-                                    : "");
-                    System.out.println(
-                            (normalize(new_string, false).equals(text)) ? "Not correctable normalize('" + new_string
-                                    + "').equals('" + text + "')=" + normalize(new_string, false).equals(text) : "");
-                }
+                    !normalize(new_string).equals(text)) {
+                _logger.finest("mutation '" + new_string + "' is ambiguous because");
+                _logger.finest((new_string.isEmpty()) ? "it's empty\n" : "");
+                _logger.finest(
+                        (mutations.subList(0, i).contains(new_string)) ? "previous slot yields the same typo\n"
+                                : "");
+                _logger.finest(
+                        (normalize(new_string).equals(text)) ? "Not correctable normalize('" + new_string
+                                + "').equals('" + text + "')=" + normalize(new_string).equals(text) : "");
                 ambiguous_invalid_matches.add(i);
             }
         }
-        if (verbose) {
-            System.out.println("ambiguous_invalid_matches=" + ambiguous_invalid_matches);
-        }
+        _logger.finest("ambiguous_invalid_matches=" + ambiguous_invalid_matches);
         List<Tuple3<Span, String, Pattern>> valid_slots = new ArrayList<>();
         for (int i = 0; i < slots.size(); i++) {
             if (!ambiguous_invalid_matches.contains(i)) {
                 valid_slots.add(slots.get(i));
             }
         }
-        if (verbose) {
-            System.out.println("\n" + "%".repeat(20) + "valid slots!" + "%".repeat(20));
-            System.out.println("valid_slots=" + valid_slots);
-            System.out.println("\n" + "%".repeat(20) + "valid slots!" + "%".repeat(20));
-            for (int i = 0; i < slots.size(); i++) {
-                System.out.println(slots.get(i) + " " + mutations.get(i));
-            }
+        _logger.finest("\n" + "%".repeat(20) + "valid slots!" + "%".repeat(20));
+        _logger.finest("valid_slots=" + valid_slots);
+        _logger.finest("\n" + "%".repeat(20) + "valid slots!" + "%".repeat(20));
+        for (int i = 0; i < slots.size(); i++) {
+            _logger.finest(slots.get(i) + " " + mutations.get(i));
         }
         return valid_slots;
     }
 
-    static List<Tuple3<Span, String, Pattern>> valid_rules_scan(String text, boolean verbose) throws IOException {
+    static List<Tuple3<Span, String, Pattern>> valid_rules_scan(String text) throws IOException {
         List<Tuple3<Span, String, Pattern>> proposed_slots = Rules.rules_scan(text);
-        if (verbose) {
-            System.out.println("proposed_slots: " + proposed_slots);
-        }
-        List<Tuple3<Span, String, Pattern>> valid_slots = valid_matches(text, proposed_slots, verbose);
-        if (verbose) {
-            System.out.println("valid_slots: ");
-            for (var s : valid_slots) {
-                System.out.println(s);
-            }
+        _logger.finest("proposed_slots: " + proposed_slots);
+        List<Tuple3<Span, String, Pattern>> valid_slots = valid_matches(text, proposed_slots);
+        _logger.finest("valid_slots: ");
+        for (var s : valid_slots) {
+            _logger.finest(s.toString());
         }
         return valid_slots;
     }
