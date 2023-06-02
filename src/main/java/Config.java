@@ -6,14 +6,16 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Config {
-	public static String config_file = "config.env";
-	public static String logging_file = "logging.env";
-	public static String dict_file = ".dictionary";
+	public static String config_file = "./Typoceros/config/config.env";
+	public static String logging_file = "./Typoceros/config/logging.env";
+	public static String dict_file = "./Typoceros/config/dictionary";
 	public static int span_size = 10;
+	private static boolean handlers_set = false;
 	public static HashMap<String, Level> log_level_map = new HashMap<String, Level>(Map.of(
 			"Typoceros", Level.FINE,
 			"Typoceros.App", Level.FINE,
@@ -111,12 +113,33 @@ public class Config {
 					String key = parts[0];
 					var value = Level.parse(parts[1]);
 					log_level_map.put(key, value);
-					Logger.getLogger(key).setLevel(value);
+					var logger = Logger.getLogger(key);
+					logger.setLevel(value);
+					if (!handlers_set)
+						logger.addHandler(
+								new FileHandler("./Typoceros/logs/"
+										+ key.replace("Typoceros.", "") + ".log"));
 				}
+				handlers_set = true;
 				reader.close();
-
 			} catch (IOException e) {
 				_logger.finest("Error reading file: " + e.getMessage());
+			}
+		}
+	}
+
+	public static void flushLogs() {
+		for (var log : log_level_map.keySet()) {
+			for (var handler : Logger.getLogger(log).getHandlers()) {
+				handler.flush();
+			}
+		}
+	}
+
+	public static void closeLogs() {
+		for (var log : log_level_map.keySet()) {
+			for (var handler : Logger.getLogger(log).getHandlers()) {
+				handler.close();
 			}
 		}
 	}

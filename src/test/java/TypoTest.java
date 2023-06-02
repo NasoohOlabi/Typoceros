@@ -105,7 +105,7 @@ public class TypoTest {
         var typo = new Typo(text, Config.span_size);
         Timer.startTimer("testString: '" + text + "'");
         _logger.finest("typo.spaces\t" + typo.getSpaces().toString());
-        Timer.prettyPrint("testString: '" + text + "'", true);
+        Timer.prettyPrint("testString: '" + text + "'");
         var byteList_rem = typo.encode_encoder(bytes);
         _logger.finest("byteList_rem\t" + byteList_rem.toString());
         var encoded = typo.encode(byteList_rem._1);

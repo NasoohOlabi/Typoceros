@@ -5,7 +5,6 @@ import java.util.logging.Logger;
 public class Timer {
     private final static Logger _logger = Logger.getLogger("Typoceros.Timer");
 
-    public static boolean PRINT = false;
     private static final Map<String, Long> startTimes = new HashMap<>();
 
     public static void startTimer(String tag) {
@@ -19,12 +18,7 @@ public class Timer {
     }
 
     public static void prettyPrint(String tag) {
-        prettyPrint(tag, PRINT);
-    }
-
-    public static void prettyPrint(String tag, boolean print) {
         Long elapsedTime = Timer.endTimer(tag);
-        if (print)
-            _logger.finest(String.format("\t\t\tTimer took %3d ms for '%s' ", elapsedTime, tag));
+        _logger.finest(String.format("\t\t\tTimer took %3d ms for '%s' ", elapsedTime, tag));
     }
 }

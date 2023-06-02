@@ -58,14 +58,17 @@ public class Typo {
             }
         }
         _spaces = buckets;
+        _logger.finest(_spaces.toString());
         return buckets;
     }
 
     public List<Integer> getBits() throws IOException {
-        return getSpaces().stream().map(util::log2).collect(Collectors.toList());
+        var bits = getSpaces().stream().map(util::log2).collect(Collectors.toList());
+        _logger.finest(bits.toString());
+        return bits;
     }
 
-    public Typo(String text, int span_size) throws IOException {
+    public Typo(String text, int span_size) throws IllegalArgumentException, IOException {
         this.text = text;
         setSpanSize(span_size);
         if (!isAcceptable(this.text)) {
