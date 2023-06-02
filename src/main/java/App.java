@@ -2,9 +2,11 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.logging.Logger;
 
 public class App {
     private static Map<String, Typo> memo = new HashMap<>();
+    private static Logger _logger = Logger.getLogger("Typoceros.log");
 
     private static Typo getTypo(String string) throws IOException {
         if (memo.containsKey(string)) {
@@ -42,11 +44,11 @@ public class App {
             }
         } catch (IllegalArgumentException e) {
             // TODO Auto-generated catch block
-            e.printStackTrace();
+            _logger.throwing("App", "main", e);
         } catch (IOException e) {
-            e.printStackTrace();
+            _logger.throwing("App", "main", e);
         } catch (ValueError e) {
-            e.printStackTrace();
+            _logger.throwing("App", "main", e);
         }
     }
 }

@@ -137,14 +137,14 @@ public class TypoTest {
             try {
                 encoded = typo.encode(values);
             } catch (IOException e) {
-                e.printStackTrace();
+                _logger.throwing("TypoTest", "testStringExtensive", e);
             }
             _logger.finest("encoded\t" + encoded);
             Tuple2<String, List<Integer>> decoded_byteList = null;
             try {
                 decoded_byteList = Typo.decode(encoded, typo);
             } catch (IOException e) {
-                e.printStackTrace();
+                _logger.throwing("TypoTest", "testStringExtensive", e);
             }
             _logger.finest("decoded_byteList\t" + decoded_byteList);
 
@@ -175,7 +175,7 @@ public class TypoTest {
     // try {
     // testString(ex, generateRandomBitStream(ex.length(), 0), false);
     // } catch (ValueError | IOException e) {
-    // e.printStackTrace();
+    // _logger.throwing("TypoTest", "testControl", e);
     // }
     // }
     // }
@@ -186,7 +186,7 @@ public class TypoTest {
         try {
             testString(ex, generateRandomBitStream(ex.length(), 0));
         } catch (ValueError | IOException e) {
-            e.printStackTrace();
+            _logger.throwing("TypoTest", "testStringExtensive", e);
         }
 
     }
@@ -196,9 +196,9 @@ public class TypoTest {
     // for (var ex :
     // examples) {
     // try {
-    // testStringExtensive(ex, false);
+    // testStringExtensive(ex);
     // } catch (ValueError | IOException e) {
-    // e.printStackTrace();
+    // _logger.throwing("TypoTest", "testAll", e);
     // }
     // }
     // }

@@ -246,7 +246,7 @@ public class LangProxy {
                                 }
                                 return Stream.empty();
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                _logger.throwing("LangProxy", "vote_fix_word", e);
                                 return Stream.empty();
                             }
                         }).collect(Collectors.toList()));
@@ -291,7 +291,7 @@ public class LangProxy {
             try {
                 return !normal_word(vote);
             } catch (IOException e) {
-                e.printStackTrace();
+                _logger.throwing("LangProxy", "vote_fix_word", e);
                 return true;
             }
         });
@@ -353,7 +353,7 @@ public class LangProxy {
             _logger.finest("repl:(" + repl + ")");
             _logger.finest("regex:(" + regex + ")");
             _logger.finest("span:(" + span + ")");
-            exp.printStackTrace();
+            _logger.throwing("LangProxy", "vote_fix_word", exp);
             throw exp;
         }
     }
