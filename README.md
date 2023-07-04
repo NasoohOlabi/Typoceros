@@ -13,6 +13,8 @@ Steganography Using Typos. We all make misstakes
 - [X] Pass some tests
 - [ ] Double check non keyboard typos work
 - [X] migrate to java lang_tool bottle neck
+- [ ] save words
 - [ ] dictionary
-- [ ] safe words
+- [X] missing character typo
+- [X] dynamic programming for encode and decode value selection spaces [5, 5, 5] values [5, 0, 3] and [2, 4, 4] => 10100101
 - [X] logger

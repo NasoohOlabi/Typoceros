@@ -5,37 +5,55 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import java.util.stream.Collectors;
 
 import io.vavr.Tuple2;
-import io.vavr.Tuple3;
 
 public class Typo {
-    private final static Logger _logger = Logger.getLogger("Typoceros.Typo");
-    private String text;
-    private List<Tuple3<Span, String, Pattern>> _slots = null;
+    private final static Logger _logger = LogManager.getLogger("Typoceros.Typo");
+    private final String text;
+    private List<TypoMatch> _slots = null;
     private List<Integer> _spaces = null;
-    private int span_size;
+    private List<Span> _chunks = null;
+    private static int span_size = 10;
 
     public int getLength() throws IOException {
         return getSlots().size();
     }
 
-    public List<Tuple3<Span, String, Pattern>> getSlots() throws IOException {
+    public List<TypoMatch> getSlots() throws IOException {
         if (this._slots == null)
-            this._slots = LangProxy.valid_rules_scan(this.text);
+            this._slots = LangProxy.valid_rules_scan(this.text,span_size);
         return this._slots;
+    }
+
+    public TypoMatch getSlot(int idx) throws IOException {
+        return getSlots().get(idx);
+    }
+
+    public TypoMatch getSlot(int space, int offset) throws IOException {
+        assert offset != 0;
+        return getSlots().get(getSlotIdx(space, offset));
+    }
+
+    public List<Span> getChunks() {
+        if (_chunks == null) {
+            var span_size = getSpanSize();
+            _chunks = util.chunk(text, span_size);
+        }
+        return _chunks;
     }
 
     public List<Integer> getSpaces() throws IOException {
         if (_spaces != null) {
             return _spaces;
         }
-        var span_size = getSpanSize();
 
-        var sentenceRanges = util.chunk(text, span_size);
+        var sentenceRanges = getChunks();
 
         // Initialize an empty list of buckets
         int numBuckets = sentenceRanges.size();
@@ -44,7 +62,7 @@ public class Typo {
 
         // Iterate through each element range and put it in the corresponding bucket
         for (int i = 0; i < this.getSlots().size(); i++) {
-            var slot = this.getSlots().get(i)._1;
+            var slot = this.getSlots().get(i).sourceSpan;
             int start = slot.start;
             int end = slot.end;
             for (int j = 0; j < sentenceRanges.size(); j++) {
@@ -58,42 +76,36 @@ public class Typo {
             }
         }
         _spaces = buckets;
-        _logger.finest(_spaces.toString());
+        _logger.debug(_spaces.toString());
         return buckets;
     }
 
     public List<Integer> getBits() throws IOException {
         var bits = getSpaces().stream().map(util::log2).collect(Collectors.toList());
-        _logger.finest(bits.toString());
+        _logger.debug(bits.toString());
         return bits;
     }
 
-    public Typo(String text, int span_size) throws IllegalArgumentException, IOException {
+    public Typo(String text) throws IllegalArgumentException, IOException {
         this.text = text;
-        setSpanSize(span_size);
         if (!isAcceptable(this.text)) {
             throw new IllegalArgumentException("Text isn't spelled correctly");
         }
     }
 
     public boolean isAcceptable(String text) throws IOException {
-        return text.equals(LangProxy.normalize(text));
+        return text.equals(LangProxy.normalize(text,getSpanSize()));
     }
 
     public String FixText(String text) throws IOException {
-        return LangProxy.normalize(text);
+        return LangProxy.normalize(text,getSpanSize());
     }
 
-    public String apply(int space, int offset, String text) throws IOException {
-        _logger.finest("apply: space=" + space + ", offset=" + offset + ", text=" + text);
+    public int getSlotIdx(int space, int offset) throws IOException {
         if (offset == 0) {
-            return text;
+            return 0;
         }
-        var match_tuple = this.getSlots()
-                .get(util.sum(this.getSpaces().subList(0, space)) + offset - 1);
-        var applied = LangProxy.applyMatch(text, match_tuple);
-        _logger.finest("applied: " + applied);
-        return applied;
+        return util.sum(this.getSpaces().subList(0, space)) + offset - 1;
     }
 
     public String encode(List<Integer> values) throws IllegalArgumentException, IOException {
@@ -109,8 +121,14 @@ public class Typo {
         }
 
         String result = this.text;
+        _logger.debug("Typo.encode: encoding " + values);
+        _logger.debug("Phase 0: " + result);
         for (int i = values.size() - 1; i >= 0; i--) {
-            result = this.apply(i, values.get(i), result);
+            if (values.get(i) != 0)
+                result = getSlot(i, values.get(i)).makeTypoInOriginal.apply(result);
+            _logger.debug("Phase "
+                    + (values.size() - i)
+                    + ": " + result);
         }
 
         return result;
@@ -118,17 +136,17 @@ public class Typo {
 
     public static Tuple2<String, List<Integer>> decode(String text, Typo test_self)
             throws IOException {
-        String original = LangProxy.normalize(text);
-        _logger.finest("original=" + original);
+        String original = LangProxy.normalize(text, getSpanSize());
+        _logger.debug("original=" + original);
         Typo t;
         if (test_self != null) {
             if (!original.equals(test_self.text)) {
-                _logger.finest("test_self.text=\n" + test_self.text);
+                _logger.debug("test_self.text=\n" + test_self.text);
             }
             assert original.equals(test_self.text);
             t = test_self;
         } else {
-            t = new Typo(original, Config.span_size);
+            t = new Typo(original);
         }
         return new Tuple2<>(original, t._decode(text, test_self));
     }
@@ -137,15 +155,15 @@ public class Typo {
         Typo a_self = test != null ? test : this;
         var spaces = a_self.getSpaces();
         int cnt = util.diff(text, a_self.text).size();
-        _logger.finest("cnt=" + cnt);
-        _logger.finest("util.diff('" + text + "','" + a_self.text + "')=" + util.diff(text, a_self.text));
+        _logger.debug("cnt=" + cnt);
+        _logger.debug("util.diff('" + text + "','" + a_self.text + "')=" + util.diff(text, a_self.text));
         List<Integer> values = new ArrayList<>(Collections.nCopies(spaces.size(), 0));
         for (int i = 0; i < spaces.size(); i++) {
             for (int j = 0; j < spaces.get(i); j++) {
                 var dif = util.diff(text, a_self.encode(values));
                 if (dif.size() == cnt - 1) {
-                    _logger.finest("values=" + values);
-                    _logger.finest("dif=" + dif);
+                    _logger.debug("values=" + values);
+                    _logger.debug("dif=" + dif);
                     cnt--;
                     break;
                 }
@@ -153,7 +171,7 @@ public class Typo {
             }
             if (Objects.equals(values.get(i), spaces.get(i))) {
                 values.set(i, 0);
-                _logger.finest("chunk is empty values=" + values);
+                _logger.debug("chunk is empty values=" + values);
             }
         }
         return values;
@@ -186,14 +204,14 @@ public class Typo {
     }
 
     public void learn(String text) throws IOException {
-        LangProxy.normalize(text, true);
+        LangProxy.normalize(text, span_size,true);
     }
 
-    public int getSpanSize() {
-        return this.span_size;
+    public static int getSpanSize() {
+        return Typo.span_size;
     }
 
-    public void setSpanSize(int value) {
-        this.span_size = value;
+    public static void setSpanSize(int value) {
+        Typo.span_size = value;
     }
 }

@@ -1,7 +1,11 @@
-import com.google.common.collect.Lists;
-import io.vavr.Tuple2;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import java.util.*;
+import com.google.common.collect.Lists;
+
+import io.vavr.Tuple2;
 
 public class util {
 
@@ -36,7 +40,30 @@ public class util {
         return mode;
     }
 
+    public static int firstNotEqualCharIndex(String str1, String str2) {
+        int len = Math.min(str1.length(), str2.length());
+        for (int i = 0; i < len; i++) {
+            if (str1.charAt(i) != str2.charAt(i)) {
+                return i;
+            }
+        }
+        if (str1.length() != str2.length()) {
+            return len;
+        }
+        return -1;
+    }
+
+    public static String firstOnNotEqualSecond(String str1, String str2) {
+        var fne = firstNotEqualCharIndex(str1, str2);
+        if (fne == -1) {
+            return str1;
+        } else {
+            return str1.substring(0, fne) + str2.substring(fne);
+        }
+    }
+
     public static List<Span> chunk(String text, int span_size) {
+        assert text.length() > 0;
         var words = Lists.newArrayList(new StringSpans(text).getWords());
         List<Span> chunks = new ArrayList<>();
         int lastStart = 0;
@@ -73,7 +100,10 @@ public class util {
     }
 
     public static int sum(List<Integer> l) {
-        return l.stream().reduce(0, Integer::sum);
+        if (l == null) {
+            throw new IllegalArgumentException("input list cannot be null");
+        }
+        return l.stream().reduce(0, (a, b) -> a + b);
     }
 
     public static List<Tuple2<String, String>> diff(String a, String b) {
@@ -90,6 +120,6 @@ public class util {
     }
 
     public static Integer log2(Integer N) {
-        return (int) (Math.log(N+1) / Math.log(2));
+        return (int) (Math.log(N + 1) / Math.log(2));
     }
 }

@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.vavr.Tuple2;
-import io.vavr.Tuple3;
 
 public class Rules {
 
@@ -60,41 +59,71 @@ public class Rules {
     static List<Tuple2<Pattern, String>> KEYBOARD_RULES = parseRules("keyboard").map(Rules::compileFirst)
             .collect(Collectors.toList());
 
-    static List<Tuple3<Span, String, Pattern>> keyboard_rules_scan(String text) {
-        List<Tuple3<Span, String, Pattern>> matches = new ArrayList<>();
+    static List<TypoMatch> keyboard_rules_scan(String text) {
+        List<TypoMatch> matches = new ArrayList<>();
         for (var rule : Rules.KEYBOARD_RULES) {
             Pattern regex = rule._1;
             Matcher matcher = regex.matcher(text);
             while (matcher.find()) {
-                int start = matcher.start();
-                int end = matcher.end();
-                String replacement = rule._2;
-                matches.add(new Tuple3<>(Span.of(start, end), replacement, regex));
+                addHit(text, matches, rule, regex, matcher);
             }
         }
         return matches;
     }
 
-    static List<Tuple3<Span, String, Pattern>> word_rules_scan(String text) {
-        List<Tuple3<Span, String, Pattern>> matches = new ArrayList<>();
+    static List<TypoMatch> word_rules_scan(String text) {
+        List<TypoMatch> matches = new ArrayList<>();
         for (var rule : Rules.WORD_RULES) {
             Pattern regex = rule._1;
             Matcher matcher = regex.matcher(text);
             if (matcher.matches()) {
-                int start = matcher.start();
-                int end = matcher.end();
-                String replacement = rule._2;
-                matches.add(new Tuple3<>(Span.of(start, end), replacement, regex));
+                addHit(text, matches, rule, regex, matcher);
             }
         }
         return matches;
     }
 
-    static List<Tuple3<Span, String, Pattern>> rules_scan(String text) {
-        List<Tuple3<Span, String, Pattern>> result = new ArrayList<>();
+    private static void addHit(String text, List<TypoMatch> matches, Tuple2<Pattern, String> rule, Pattern regex, Matcher matcher) {
+        int start = matcher.start();
+        int end = matcher.end();
+        String replacement = rule._2;
+        var span = Span.of(start, end);
+        matches.add(
+                TypoMatch.of(
+                        LangProxy.applyMatch(text,replacement, regex,span),
+                        span,
+                        (x)->LangProxy.applyMatch(x,replacement, regex,span))
+                );
+    }
+
+    static List<TypoMatch> missing_letter_scan(String text) {
+        List<TypoMatch> matches = new ArrayList<>();
+
+        Pattern regex = Pattern.compile("(?<=[^\\W])[a-z](?=[^\\W])");
+        Matcher matcher = regex.matcher(text);
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = matcher.end();
+            var span = Span.of(start, end);
+            matches.add(
+                    TypoMatch.of(span.notIn(text),span , span::notIn));
+        }
+
+        return matches;
+    }
+
+    static List<TypoMatch> rules_scan(String text) {
+        List<TypoMatch> result = new ArrayList<>();
         result.addAll(word_rules_scan(text));
         result.addAll(keyboard_rules_scan(text));
-        result.sort((a, b) -> (a._1.start - b._1.start != 0) ? a._1.start - b._1.start : a._1.end - b._1.end);
+        result.addAll(missing_letter_scan(text));
+        result.sort((a, b) -> (
+                a.sourceSpan.start -
+                        b.sourceSpan.start != 0) ?
+                a.sourceSpan.start -
+                        b.sourceSpan.start :
+                a.sourceSpan.end -
+                        b.sourceSpan.end);
         return result;
     }
 }

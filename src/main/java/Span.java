@@ -52,14 +52,30 @@ public class Span {
                 '}';
     }
 
-    public String in(String text){
-        return text.substring(start,end);
-    }
-    public String swap(String text,String repl){
-        return text.substring(0,start)+repl+text.substring(end);
+    public String in(String text) {
+        assert start >= 0;
+        assert end <= text.length();
+        return text.substring(start, end);
     }
 
-    public Span map(Function<Integer,Integer> f){
-        return Span.of(f.apply(start),f.apply(end));
+    public int dist(int point) {
+        // point < start < end   -> d >  0
+        // start < end   < point -> d >  0
+        // start <= point <= end   -> d <= 0
+
+        var d = Math.max(start - point, point - end);
+        return Math.max(d, 0);
+    }
+
+    public String notIn(String text) {
+        return text.substring(0, start) + text.substring(end);
+    }
+
+    public String swap(String text, String repl) {
+        return text.substring(0, start) + repl + text.substring(end);
+    }
+
+    public Span map(Function<Integer, Integer> f) {
+        return Span.of(f.apply(start), f.apply(end));
     }
 }

@@ -7,8 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.FileHandler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.logging.Level;import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.slf4j.helpers.BasicMarker;
 
 public class Config {
 	public static String config_file = "./Typoceros/config/config.env";
@@ -26,7 +27,7 @@ public class Config {
 			"Typoceros.TypoTest", Level.FINE,
 			"Typoceros.Config", Level.FINE));
 
-	private final static Logger _logger = Logger.getLogger("Typoceros.Config");
+	private final static Logger _logger = LogManager.getLogger("Typoceros.Config");
 
 	public static void sync() {
 		File file = new File(config_file);
@@ -37,7 +38,7 @@ public class Config {
 				writer.write("span_size=" + span_size);
 				writer.close();
 			} catch (IOException e) {
-				_logger.finest("Error writing file: " + e.getMessage());
+				_logger.debug("Error writing file: " + e.getMessage());
 			}
 		} else {
 			try {
@@ -55,31 +56,9 @@ public class Config {
 				reader.close();
 
 			} catch (IOException e) {
-				_logger.finest("Error reading file: " + e.getMessage());
+				_logger.debug("Error reading file: " + e.getMessage());
 			}
 		}
-	}
-
-	public static List<String> dict() {
-		File file = new File(dict_file);
-		if (!file.exists()) {
-			try (
-					FileWriter writer = new FileWriter(file)) {
-				writer.close();
-			} catch (IOException e) {
-				_logger.finest("Error writing file: " + e.getMessage());
-			}
-		} else {
-			try (
-					BufferedReader reader = new BufferedReader(new FileReader(file))) {
-				var lines = reader.lines().toList();
-				reader.close();
-				return lines;
-			} catch (Exception e) {
-				_logger.finest("Error reading " + dict_file + ": " + e.getMessage());
-			}
-		}
-		return List.of();
 	}
 
 	public static String levelsToString() {
@@ -102,7 +81,7 @@ public class Config {
 				writer.write(levelsToString());
 				writer.close();
 			} catch (IOException e) {
-				_logger.finest("Error writing file: " + e.getMessage());
+				_logger.debug("Error writing file: " + e.getMessage());
 			}
 		} else {
 			try {
@@ -113,34 +92,27 @@ public class Config {
 					String key = parts[0];
 					var value = Level.parse(parts[1]);
 					log_level_map.put(key, value);
-					var logger = Logger.getLogger(key);
-					logger.setLevel(value);
-					if (!handlers_set)
-						logger.addHandler(
-								new FileHandler("./Typoceros/logs/"
-										+ key.replace("Typoceros.", "") + ".log"));
+					var logger = LogManager.getLogger(key);
+
+//					if (!handlers_set)
+//						logger.addHandler(
+//								new FileHandler("./Typoceros/logs/"
+//										+ key.replace("Typoceros.", "") + ".log"));
 				}
 				handlers_set = true;
 				reader.close();
 			} catch (IOException e) {
-				_logger.finest("Error reading file: " + e.getMessage());
+				_logger.debug("Error reading file: " + e.getMessage());
 			}
 		}
 	}
 
-	public static void flushLogs() {
-		for (var log : log_level_map.keySet()) {
-			for (var handler : Logger.getLogger(log).getHandlers()) {
-				handler.flush();
-			}
-		}
-	}
+//	public static void flushLogs() {
+//		for (var log : log_level_map.keySet()) {
+//			for (var handler : LogManager.getLogger(log).getHandlers()) {
+//				handler.flush();
+//			}
+//		}
+//	}
 
-	public static void closeLogs() {
-		for (var log : log_level_map.keySet()) {
-			for (var handler : Logger.getLogger(log).getHandlers()) {
-				handler.close();
-			}
-		}
-	}
 }

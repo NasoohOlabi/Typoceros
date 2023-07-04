@@ -3,17 +3,20 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.logging.Logger;
+
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 
 public class App {
     private static Map<String, Typo> memo = new HashMap<>();
-    private static Logger _logger = Logger.getLogger("Typoceros.App");
+    private static Logger _logger = LogManager.getLogger("Typoceros.App");
 
     private static Typo getTypo(String string) throws IOException, IllegalArgumentException {
         if (memo.containsKey(string)) {
             return memo.get(string);
         }
-        Typo typo = new Typo(string, Config.span_size);
+        Typo.setSpanSize(Config.span_size);
+        Typo typo = new Typo(string);
         memo.put(string, typo);
         return typo;
     }
@@ -34,7 +37,11 @@ public class App {
                 string = scanner.nextLine();
                 Config.sync();
                 Config.syncLogLevels();
-                if (command.equalsIgnoreCase("encode")) {
+                if (command.equalsIgnoreCase("spell")) {
+                    System.out.println(LangProxy.normalize(string,Config.span_size));
+                } else if (command.equalsIgnoreCase("learn")) {
+                    LangProxy.normalize(string,Config.span_size,true);
+                } else if (command.equalsIgnoreCase("encode")) {
                     bytes = scanner.nextLine();
                     typo = getTypo(string);
                     var values_remainingBytes = typo.encode_encoder(bytes);
@@ -49,13 +56,13 @@ public class App {
                     System.out.println(originalText);
                     System.out.println(values);
                 }
-                Config.flushLogs();
+//                Config.flushLogs();
             }
         } catch (IllegalArgumentException | IOException | ValueError e) {
             e.printStackTrace();
-            _logger.severe("App in main " + e.getMessage());
+            _logger.error("App in main " + e.getMessage());
         } finally {
-            Config.closeLogs();
+//            Config.closeLogs();
         }
     }
 }

@@ -1,7 +1,8 @@
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.logging.Logger;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,7 +16,7 @@ class StringSpans {
     private List<Span> nonWords;
     private List<Span> nonSpaces;
 
-    private final static Logger _logger = Logger.getLogger("Typoceros.StringSpan");
+    private final static Logger _logger = LogManager.getLogger("Typoceros.StringSpan");
 
     public StringSpans() {
     }
@@ -121,19 +122,23 @@ class StringSpans {
             }
         }
         if (verbose) {
-            _logger.finest("expand_span_to_word(" + words + "," + span + ")=" + returnValue + "");
+            _logger.debug("expand_span_to_word(" + words + "," + span + ")=" + returnValue + "");
         }
         if (returnValue != null)
             return returnValue;
         else {
-            _logger.finest("span=" + span);
-            _logger.finest("words=" + words);
+            _logger.debug("span=" + span);
+            _logger.debug("words=" + words);
             throw new IllegalArgumentException("Something is wrong");
         }
     }
 
     public Span word_span(Span span) {
         return expand_span_to_word(span)._1;
+    }
+
+    public static StringSpans of (String string){
+        return new StringSpans(string);
     }
 
     public StringSpans replace_word_StringSpans(int word_index, String replacement) {
