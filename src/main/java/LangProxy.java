@@ -3,15 +3,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.languagetool.JLanguageTool;
 import org.languagetool.language.AmericanEnglish;
 import org.languagetool.rules.RuleMatch;
@@ -50,7 +48,7 @@ public class LangProxy {
         int uls = util.countUppercaseLetters(word);
         if (Character.toLowerCase(spelling.charAt(0)) == Character.toLowerCase(word.charAt(0))
                 && Character.toLowerCase(spelling.charAt(spelling.length() - 1)) == Character
-                .toLowerCase(word.charAt(word.length() - 1))
+                        .toLowerCase(word.charAt(word.length() - 1))
                 && uls == 2
                 && uls < word.length()) {
 
@@ -126,7 +124,7 @@ public class LangProxy {
         StringSpans text_sss = new StringSpans(text);
         List<Span> affected_words = getAffectedWords(text, text_sss, offsets);
         _logger.debug("normalize \ntext=" + text +
-                "\nchunks=" + chunks.stream().map(s -> s.in(text)).toList() +
+                "\nchunks=" + chunks.stream().map(s -> s.in(text)).collect(Collectors.toList()) +
                 "\noffsets=" + offsets +
                 "\ntext_sss.words=" + text_sss.getWordsStrings() +
                 "\naffected_words=" + affected_words);
@@ -175,8 +173,7 @@ public class LangProxy {
                         offsets_chunk.get(0)._2 +
                         "\tsuggestion=" +
                         util.mode(cs) + "\tvotes=" + cs);
-                to_be_original =
-                        offsets_chunk.get(0)._2.swap(to_be_original, util.mode(cs));
+                to_be_original = offsets_chunk.get(0)._2.swap(to_be_original, util.mode(cs));
             } else {
                 empty_chunks[i] = true;
             }
@@ -246,7 +243,7 @@ public class LangProxy {
                                 _logger.error("vote_fix_word", e);
                                 return Stream.empty();
                             }
-                        }).toList());
+                        }).collect(Collectors.toList()));
         _logger.debug("\nvote_fix_word suggestions (context + non) tried out: " + suggestions);
         _logger.debug(suggestions.toString());
         if (suggestions.size() == 0) {
@@ -291,8 +288,7 @@ public class LangProxy {
             }
         }
         var alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
-        for (var c :
-                alphabet) {
+        for (var c : alphabet) {
             for (int i = 1; i < typo.length(); i++) {
                 votes.add(insertCharAtIndex(typo, c, i));
             }
@@ -347,7 +343,8 @@ public class LangProxy {
         try {
             var replaced_text = regex.matcher(span.in(text)).replaceAll(repl);
 
-            _logger.debug(String.format("'%s' -> '%s'", span.in(text), replaced_text) + " text='" + text + "'\trepl='" + repl + "'\tregex='" + regex + "'\tspan='" + span + "'");
+            _logger.debug(String.format("'%s' -> '%s'", span.in(text), replaced_text) + " text='" + text + "'\trepl='"
+                    + repl + "'\tregex='" + regex + "'\tspan='" + span + "'");
 
             return span.swap(text, replaced_text);
         } catch (Exception exp) {
@@ -381,7 +378,7 @@ public class LangProxy {
     }
 
     public static List<TypoMatch> valid_matches(String text,
-                                                List<TypoMatch> slots, int span_size) throws IOException {
+            List<TypoMatch> slots, int span_size) throws IOException {
         StringSpans texas = new StringSpans(text);
         List<String> mutations = new ArrayList<>(Collections.nCopies(slots.size(), ""));
         for (int match_index = 0; match_index < slots.size(); match_index++) {
@@ -429,8 +426,7 @@ public class LangProxy {
                 _logger.debug("mutation '" + new_string + "' is ambiguous because " +
                         "previous slot yields the same typo\n");
                 ambiguous_invalid_matches.add(i);
-            } else if
-            (!normalize(new_string, span_size).equals(text)) {
+            } else if (!normalize(new_string, span_size).equals(text)) {
                 _logger.debug("mutation '" + new_string + "' is ambiguous because " +
                         "Not correctable normalize('" + new_string
                         + "').equals('" + text + "')=" + normalize(new_string, span_size).equals(text));

@@ -4,7 +4,7 @@ import java.util.function.Function;
 public class TypoMatch {
     public final String after;
     public final Span sourceSpan;
-    public final Function<String,String> makeTypoInOriginal;
+    public final Function<String, String> makeTypoInOriginal;
 
     public TypoMatch(String after, Span sourceSpan, Function<String, String> makeTypoInOriginal) {
         this.after = after;
@@ -12,8 +12,8 @@ public class TypoMatch {
         this.makeTypoInOriginal = makeTypoInOriginal;
     }
 
-    public static TypoMatch of(String after, Span sourceSpan, Function<String, String> apply){
-        return new TypoMatch(after,sourceSpan,apply);
+    public static TypoMatch of(String after, Span sourceSpan, Function<String, String> apply) {
+        return new TypoMatch(after, sourceSpan, apply);
     }
 
     @Override
@@ -25,8 +25,13 @@ public class TypoMatch {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof TypoMatch typoMatch)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof TypoMatch))
+            return false;
+
+        TypoMatch typoMatch = (TypoMatch) o; // Cast o to TypoMatch type
+
         return after.equals(typoMatch.after) && sourceSpan.equals(typoMatch.sourceSpan);
     }
 
