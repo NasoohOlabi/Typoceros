@@ -2,25 +2,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
-
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-//import org.apache.log4j.core.config.Configurator;
+//
 import org.junit.Test;
 
 import io.vavr.Tuple2;
 
 public class TypoTest {
-    private final Logger _logger = LogManager.getLogger("Typoceros.TypoTest");
-
+    private final Logger _logger = new Logger("./Typoceros/logs/Typoceros.TypoTest");
 
     public static String generateRandomBitStream(int length, long seed) {
 
@@ -37,9 +32,13 @@ public class TypoTest {
 
     String[] examples = {
             "hi, how are you?",
+            " Yep, she actually makes $1123,000 per episode! Crazy huh? ",
             "I sure do. You can listen to JUpiter's storms on AM radio",
-//            "Hey, How are you? Did you see the last John Cena movie?", "Hi, How are you?",
-//            "However, you may as well just use a function statement instead; the only advantage that a lambda offers is that you can put a function definition for a simple expression inside a larger expression.",
+            // "Hey, How are you? Did you see the last John Cena movie?", "Hi, How are
+            // you?",
+            // "However, you may as well just use a function statement instead; the only
+            // advantage that a lambda offers is that you can put a function definition for
+            // a simple expression inside a larger expression.",
             "However, you may as well just use a function statement instead; the only advantage that a lambda offers is that you can put a function definition for a simple expression inside a larger expression. But the above lambda is not part of a larger expression, it is only ever part of an assignment statement, binding it to a name. That's exactly what a statement would achieve.",
             "I’ve toyed with the idea of using GPT-3’s API to add much more intelligent capabilities to RC, but I can’t deny that I’m drawn to the idea of running this kind of language model locally and in an environment I control. I’d like to someday increase the speed of RC’s speech synthesis and add a speech-to-text translation model in order to achieve real-time communication between humans and the chatbot. I anticipate that with this handful of improvements, RC will be considered a fully-fledged member of our server. Often, we feel that it already is."
     };
@@ -138,7 +137,7 @@ public class TypoTest {
         _logger.info("typo.spaces\t" + typo.getSpaces().toString());
         Timer.prettyPrint("testString: '" + text + "'");
         final String sep = "v".repeat(55);
-        spacesTest(typo.getSpaces(),140).forEach(values -> {
+        spacesTest(typo.getSpaces(), 140).forEach(values -> {
             _logger.info(sep);
             _logger.info("values: " + values);
             Timer.startTimer(
@@ -173,7 +172,7 @@ public class TypoTest {
     public void testNormalize() throws IOException {
         _logger.info("Test started");
         assertEquals("hi, how are you?", LangProxy.normalize("hi, how are yiou?", 10, true));
-        assertEquals(examples[1], LangProxy.normalize(examples[1], 10,true));
+        assertEquals(examples[1], LangProxy.normalize(examples[1], 10, true));
         for (var ex : examples) {
             assertEquals(ex, LangProxy.normalize(ex, 10, false));
         }
@@ -205,8 +204,7 @@ public class TypoTest {
 
     @Test
     public void testAll() {
-        for (var ex :
-                examples) {
+        for (var ex : examples) {
             try {
                 testStringExtensive(ex);
             } catch (ValueError | IOException e) {

@@ -5,16 +5,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
-
 import java.util.stream.Collectors;
 
 import io.vavr.Tuple2;
 
 public class Typo {
-    private final static Logger _logger = LogManager.getLogger("Typoceros.Typo");
+    private final static Logger _logger = new Logger("./Typoceros/logs/Typoceros.Typo");
     private final String text;
     private List<TypoMatch> _slots = null;
     private List<Integer> _spaces = null;
@@ -27,7 +23,7 @@ public class Typo {
 
     public List<TypoMatch> getSlots() throws IOException {
         if (this._slots == null)
-            this._slots = LangProxy.valid_rules_scan(this.text,span_size);
+            this._slots = LangProxy.valid_rules_scan(this.text, span_size);
         return this._slots;
     }
 
@@ -87,18 +83,18 @@ public class Typo {
     }
 
     public Typo(String text) throws IllegalArgumentException, IOException {
-        this.text = text;
+        this.text = LangProxy.normalize(text, Config.span_size);
         if (!isAcceptable(this.text)) {
             throw new IllegalArgumentException("Text isn't spelled correctly");
         }
     }
 
     public boolean isAcceptable(String text) throws IOException {
-        return text.equals(LangProxy.normalize(text,getSpanSize()));
+        return text.equals(LangProxy.normalize(text, getSpanSize()));
     }
 
     public String FixText(String text) throws IOException {
-        return LangProxy.normalize(text,getSpanSize());
+        return LangProxy.normalize(text, getSpanSize());
     }
 
     public int getSlotIdx(int space, int offset) throws IOException {
@@ -204,7 +200,7 @@ public class Typo {
     }
 
     public void learn(String text) throws IOException {
-        LangProxy.normalize(text, span_size,true);
+        LangProxy.normalize(text, span_size, true);
     }
 
     public static int getSpanSize() {

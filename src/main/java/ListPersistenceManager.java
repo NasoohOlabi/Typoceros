@@ -1,5 +1,3 @@
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -22,7 +20,8 @@ public class ListPersistenceManager {
     public boolean containsItem(String item) {
         return itemList.contains(item);
     }
-    private final static Logger _logger = LogManager.getLogger("Typoceros.ListPersistenceManager");
+
+    private final static Logger _logger = new Logger("./Typoceros/logs/Typoceros.ListPersistenceManager");
 
     private List<String> loadListFromFile() {
         List<String> list = new ArrayList<>();

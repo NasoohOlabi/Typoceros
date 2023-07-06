@@ -1,10 +1,8 @@
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 
 public class Timer {
-    private final static Logger _logger = LogManager.getLogger("Typoceros.Timer");
+    private final static Logger _logger = new Logger("./Typoceros/logs/Typoceros.Timer");
 
     private static final Map<String, Long> startTimes = new HashMap<>();
 
