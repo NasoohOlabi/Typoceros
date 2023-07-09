@@ -83,10 +83,7 @@ public class Typo {
     }
 
     public Typo(String text) throws IllegalArgumentException, IOException {
-        this.text = LangProxy.normalize(text, Config.span_size);
-        if (!isAcceptable(this.text)) {
-            throw new IllegalArgumentException("Text isn't spelled correctly");
-        }
+        this.text = ThinLangApi.correct(text);
     }
 
     public boolean isAcceptable(String text) throws IOException {
@@ -137,7 +134,7 @@ public class Typo {
         Typo t;
         if (test_self != null) {
             if (!original.equals(test_self.text)) {
-                _logger.debug("test_self.text=\n" + test_self.text);
+                _logger.debug("test_self.text=" + test_self.text);
             }
             assert original.equals(test_self.text);
             t = test_self;

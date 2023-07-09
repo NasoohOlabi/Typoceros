@@ -253,4 +253,9 @@ class StringSpans {
         throw new IllegalArgumentException("offset=" + offset + " is not in any word");
     }
 
+    @Override
+    public String toString() {
+        return getWordsStrings().toString();
+    }
+
 }

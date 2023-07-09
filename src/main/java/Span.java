@@ -1,6 +1,8 @@
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.languagetool.rules.RuleMatch;
+
 public class Span {
     public final int start;
     public final int end;
@@ -15,7 +17,6 @@ public class Span {
     public static Span of(int start, int end) {
         return new Span(start, end);
     }
-
 
     public int getStart() {
         return start;
@@ -58,15 +59,6 @@ public class Span {
         return text.substring(start, end);
     }
 
-    public int dist(int point) {
-        // point < start < end   -> d >  0
-        // start < end   < point -> d >  0
-        // start <= point <= end   -> d <= 0
-
-        var d = Math.max(start - point, point - end);
-        return Math.max(d, 0);
-    }
-
     public String notIn(String text) {
         return text.substring(0, start) + text.substring(end);
     }
@@ -77,5 +69,9 @@ public class Span {
 
     public Span map(Function<Integer, Integer> f) {
         return Span.of(f.apply(start), f.apply(end));
+    }
+
+    public static Span fromRule(RuleMatch ruleMatch) {
+        return Span.of(ruleMatch.getFromPos(), ruleMatch.getToPos());
     }
 }

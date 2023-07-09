@@ -55,8 +55,7 @@ public class App {
                 // Config.flushLogs();
             }
         } catch (IllegalArgumentException | IOException | ValueError e) {
-            e.printStackTrace();
-            _logger.error("App in main " + e.getMessage());
+            _logger.error("App in main ", e);
         } finally {
             // Config.closeLogs();
         }

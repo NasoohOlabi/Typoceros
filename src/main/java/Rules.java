@@ -83,17 +83,17 @@ public class Rules {
         return matches;
     }
 
-    private static void addHit(String text, List<TypoMatch> matches, Tuple2<Pattern, String> rule, Pattern regex, Matcher matcher) {
+    private static void addHit(String text, List<TypoMatch> matches, Tuple2<Pattern, String> rule, Pattern regex,
+            Matcher matcher) {
         int start = matcher.start();
         int end = matcher.end();
         String replacement = rule._2;
         var span = Span.of(start, end);
         matches.add(
-                TypoMatch.of(
-                        LangProxy.applyMatch(text,replacement, regex,span),
+                TypoMatch.of(text,
+                        LangProxy.applyMatch(text, replacement, regex, span),
                         span,
-                        (x)->LangProxy.applyMatch(x,replacement, regex,span))
-                );
+                        (x) -> LangProxy.applyMatch(x, replacement, regex, span)));
     }
 
     static List<TypoMatch> missing_letter_scan(String text) {
@@ -106,7 +106,7 @@ public class Rules {
             int end = matcher.end();
             var span = Span.of(start, end);
             matches.add(
-                    TypoMatch.of(span.notIn(text),span , span::notIn));
+                    TypoMatch.of(text, span.notIn(text), span, span::notIn));
         }
 
         return matches;
@@ -117,13 +117,11 @@ public class Rules {
         result.addAll(word_rules_scan(text));
         result.addAll(keyboard_rules_scan(text));
         result.addAll(missing_letter_scan(text));
-        result.sort((a, b) -> (
-                a.sourceSpan.start -
-                        b.sourceSpan.start != 0) ?
-                a.sourceSpan.start -
-                        b.sourceSpan.start :
-                a.sourceSpan.end -
-                        b.sourceSpan.end);
+        result.sort((a, b) -> (a.sourceSpan.start -
+                b.sourceSpan.start != 0) ? a.sourceSpan.start -
+                        b.sourceSpan.start
+                        : a.sourceSpan.end -
+                                b.sourceSpan.end);
         return result;
     }
 }

@@ -18,3 +18,4 @@ Steganography Using Typos. We all make misstakes
 - [X] missing character typo
 - [X] dynamic programming for encode and decode value selection spaces [5, 5, 5] values [5, 0, 3] and [2, 4, 4] => 10100101
 - [X] logger
+- [ ] Remove dead chunks and replace it with dead words! there is no need to loose the whole chunk.

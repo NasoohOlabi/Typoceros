@@ -85,17 +85,17 @@ public class TypoTest {
 
     @Test
     public void spellCheckEdges() throws IOException {
-        var alone = LangProxy.check("arte");
+        var alone = ThinLangApi.check("arte");
         _logger.info(alone.toString());
         for (var rm : alone) {
             _logger.info(rm.getSuggestedReplacements().toString());
         }
-        var context = LangProxy.check("I arte an apple");
+        var context = ThinLangApi.check("I arte an apple");
         _logger.info(context.toString());
         for (var rm : context) {
             _logger.info(rm.getSuggestedReplacements().toString());
         }
-        var context_wrong_meaning = LangProxy.check("I are an apple");
+        var context_wrong_meaning = ThinLangApi.check("I are an apple");
         _logger.info(context_wrong_meaning.toString());
         for (var rm : context_wrong_meaning) {
             _logger.info(rm.getSuggestedReplacements().toString());

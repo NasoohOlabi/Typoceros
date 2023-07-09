@@ -18,13 +18,17 @@ public class Logger {
 	}
 
 	public void _log(String message, File f) {
+		_log(message, f, "\n");
+	}
+
+	public void _log(String message, File f, String end) {
 		try {
 			if (!f.exists()) {
 				f.createNewFile();
 			}
 
 			try (var writer = new FileWriter(f, true)) {
-				writer.write(message + "\n");
+				writer.write(message + end);
 			}
 		} catch (IOException e) {
 			System.out.println("An error occurred while writing to the log file: " + e.getMessage());
@@ -57,6 +61,23 @@ public class Logger {
 
 	public void trace(String message) {
 		_log(message, traceFile);
+	}
+
+	public void trace_info(String message) {
+		_log(message, traceFile);
+		_log(message, infoFile);
+	}
+
+	public void trace(String name, Object value) {
+		_log(name + "=" + value.toString(), traceFile);
+	}
+
+	public void debugSeparatorStart() {
+		_log("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv", debugFile);
+	}
+
+	public void debugSeparatorEnd() {
+		_log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", debugFile);
 	}
 
 }
