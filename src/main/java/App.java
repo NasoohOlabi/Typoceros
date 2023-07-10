@@ -46,11 +46,10 @@ public class App {
                     System.out.println(typo.encode(values));
                     System.out.println(remainingBytes);
                 } else if (command.equalsIgnoreCase("decode")) {
-                    var originalText_values = Typo.decode(string, null);
-                    var originalText = originalText_values._1();
-                    var values = originalText_values._2;
+                    var originalText_values_bits = Typo.decode(string, null);
+                    var originalText = originalText_values_bits._1();
                     System.out.println(originalText);
-                    System.out.println(values);
+                    System.out.println(originalText_values_bits._3());
                 }
                 // Config.flushLogs();
             }

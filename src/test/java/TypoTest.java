@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 //
 import org.junit.Test;
 
-import io.vavr.Tuple2;
+import io.vavr.Tuple3;
 
 public class TypoTest {
     private final Logger _logger = new Logger("./Typoceros/logs/Typoceros.TypoTest");
@@ -149,7 +149,7 @@ public class TypoTest {
                 _logger.error("testStringExtensive", e);
             }
             _logger.info("encoded\t" + encoded);
-            Tuple2<String, List<Integer>> decoded_byteList = null;
+            Tuple3<String, List<Integer>, String> decoded_byteList = null;
             try {
                 decoded_byteList = Typo.decode(encoded, typo);
             } catch (IOException e) {

@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import io.vavr.Tuple2;
+import io.vavr.Tuple3;
 
 public class Typo {
     private final static Logger _logger = new Logger("./Typoceros/logs/Typoceros.Typo");
@@ -23,7 +24,7 @@ public class Typo {
 
     public List<TypoMatch> getSlots() throws IOException {
         if (this._slots == null) {
-        _logger.info("generating slots!");
+            _logger.info("generating slots!");
             this._slots = LangProxy.valid_rules_scan(this.text, span_size);
         }
         return this._slots;
@@ -89,8 +90,7 @@ public class Typo {
         this.text = LangProxy.normalize(text, getSpanSize());
         if (!isAcceptable(text, this.text)) {
             throw new IllegalArgumentException(String.format(
-                    "text '%s' normalizes to '%s'", text, this.text
-            ));
+                    "text '%s' normalizes to '%s'", text, this.text));
         }
         _logger.info(String.format("this.text = '%s'", this.text));
     }
@@ -141,7 +141,7 @@ public class Typo {
         return result;
     }
 
-    public static Tuple2<String, List<Integer>> decode(String text, Typo test_self)
+    public static Tuple3<String, List<Integer>, String> decode(String text, Typo test_self)
             throws IOException {
         String original = LangProxy.normalize(text, getSpanSize());
         _logger.debug("original=" + original);
@@ -155,7 +155,8 @@ public class Typo {
         } else {
             t = new Typo(original);
         }
-        return new Tuple2<>(original, t._decode(text, test_self));
+        var values = t._decode(text, test_self);
+        return new Tuple3<>(original, values, t.decode_decoder(values));
     }
 
     public List<Integer> _decode(String text, Typo test) throws IOException {
@@ -220,5 +221,16 @@ public class Typo {
 
     public static void setSpanSize(int value) {
         Typo.span_size = value;
+    }
+
+    public String decode_decoder(List<Integer> values) throws IOException {
+        List<String> res = new ArrayList<>();
+        for (int i = 0; i < values.size(); i++) {
+            String v = "";
+            v = Integer.toBinaryString(values.get(i));
+            v = ("0".repeat(Math.max(getBits().get(i) - v.length(), 0))) + v;
+            res.add(v);
+        }
+        return String.join("", res);
     }
 }
