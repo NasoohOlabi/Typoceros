@@ -228,7 +228,7 @@ public class Typo {
         for (int i = 0; i < values.size(); i++) {
             String v = "";
             v = Integer.toBinaryString(values.get(i));
-            v = ("0".repeat(Math.max(getBits().get(i) - v.length(), 0))) + v;
+            v = ("0".repeat(Math.max(getBits().get(i) - v.length()+1, 0))) + v;
             res.add(v);
         }
         return String.join("", res);
