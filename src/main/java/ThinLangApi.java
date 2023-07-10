@@ -101,6 +101,8 @@ public class ThinLangApi {
 	private final static int INTENTIONAL_TYPO_STR_DIST = 1;
 
 	public static boolean intentionalTypo(String word, String typo) {
-		return util.stringMutationDistance(word, typo) <= INTENTIONAL_TYPO_STR_DIST;
+		return util.stringMutationDistance(word, typo) <= INTENTIONAL_TYPO_STR_DIST
+				&& !word.contains(" ")
+				&& !typo.contains(" ");
 	}
 }

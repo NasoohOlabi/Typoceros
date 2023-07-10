@@ -3,11 +3,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class Logger {
-	private File logFile;
-	private File infoFile;
-	private File debugFile;
-	private File errorFile;
-	private File traceFile;
+	private final File logFile;
+	private final File infoFile;
+	private final File debugFile;
+	private final File errorFile;
+	private final File traceFile;
 
 	public Logger(String filePath) {
 		this.logFile = new File(filePath);

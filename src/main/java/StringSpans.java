@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -258,4 +259,16 @@ class StringSpans {
         return getWordsStrings().toString();
     }
 
+
+    public Optional<Span> unionIntersects(Span span){
+        Span acc_span = null;
+        for (var word: getWords()) {
+            if (word.intersects(span)){
+                acc_span = (acc_span == null)
+                        ? word
+                        : acc_span.union(word);
+            }
+        }
+        return Optional.ofNullable(acc_span);
+    }
 }

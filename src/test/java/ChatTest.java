@@ -38,7 +38,7 @@ public class ChatTest {
 		var tt = new TypoTest();
 		for (var ex : chat) {
 			try {
-				tt.testString(ThinLangApi.correct(ex), TypoTest.generateRandomBitStream(ex.length(), 0));
+				tt.testString(ex, TypoTest.generateRandomBitStream(ex.length(), 0));
 			} catch (ValueError | IOException e) {
 				_logger.error("testStringExtensive", e);
 			}

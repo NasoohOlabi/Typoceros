@@ -74,4 +74,9 @@ public class Span {
     public static Span fromRule(RuleMatch ruleMatch) {
         return Span.of(ruleMatch.getFromPos(), ruleMatch.getToPos());
     }
+
+    public Span union(Span other) {
+        return Span.of(Math.min(this.getStart(),other.getStart()),
+                Math.max(this.getEnd(),other.getEnd()));
+    }
 }

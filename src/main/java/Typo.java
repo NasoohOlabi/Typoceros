@@ -22,8 +22,10 @@ public class Typo {
     }
 
     public List<TypoMatch> getSlots() throws IOException {
-        if (this._slots == null)
+        if (this._slots == null) {
+        _logger.info("generating slots!");
             this._slots = LangProxy.valid_rules_scan(this.text, span_size);
+        }
         return this._slots;
     }
 
@@ -48,7 +50,7 @@ public class Typo {
         if (_spaces != null) {
             return _spaces;
         }
-
+        _logger.info("generating Spaces");
         var sentenceRanges = getChunks();
 
         // Initialize an empty list of buckets
@@ -83,7 +85,18 @@ public class Typo {
     }
 
     public Typo(String text) throws IllegalArgumentException, IOException {
-        this.text = ThinLangApi.correct(text);
+        _logger.info(String.format("Typo constructor: text %s", text));
+        this.text = LangProxy.normalize(text, getSpanSize());
+        if (!isAcceptable(text, this.text)) {
+            throw new IllegalArgumentException(String.format(
+                    "text '%s' normalizes to '%s'", text, this.text
+            ));
+        }
+        _logger.info(String.format("this.text = '%s'", this.text));
+    }
+
+    public boolean isAcceptable(String text, String normalized) throws IOException {
+        return text.equals(normalized);
     }
 
     public boolean isAcceptable(String text) throws IOException {
@@ -102,6 +115,7 @@ public class Typo {
     }
 
     public String encode(List<Integer> values) throws IllegalArgumentException, IOException {
+        _logger.debugSeparatorStart();
         var spaces = this.getSpaces();
         if (values.size() > spaces.size()) {
             throw new IllegalArgumentException("Can't encode");
@@ -114,7 +128,7 @@ public class Typo {
         }
 
         String result = this.text;
-        _logger.debug("Typo.encode: encoding " + values);
+        _logger.debug("Typo.encode: encoding " + values + " in '" + this.text + "'");
         _logger.debug("Phase 0: " + result);
         for (int i = values.size() - 1; i >= 0; i--) {
             if (values.get(i) != 0)
@@ -123,7 +137,7 @@ public class Typo {
                     + (values.size() - i)
                     + ": " + result);
         }
-
+        _logger.debugSeparatorEnd();
         return result;
     }
 
