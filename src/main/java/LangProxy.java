@@ -14,22 +14,23 @@ import io.vavr.Tuple3;
 public class LangProxy {
     private final static ListPersistenceManager dict = new ListPersistenceManager(Config.dict_file);
 
-    private final static Logger LangProxy_logger = new Logger("./Typoceros/logs/Typoceros.LangProxy");
-    private final static Logger normalize_logger = new Logger("./Typoceros/logs/Typoceros.LangProxy.normalize");
+    private final static Logger LangProxy_logger = new Logger("./Typoceros/logs/LangProxy");
+    private final static Logger normalize_logger = new Logger("./Typoceros/logs/LangProxy.normalize");
     private static Logger _logger = LangProxy_logger;
 
     public static boolean word_we_misspelled(String word, String spelling) {
         int uls = util.countUppercaseLetters(word);
         if (Character.toLowerCase(spelling.charAt(0)) == Character.toLowerCase(word.charAt(0))
                 && Character.toLowerCase(spelling.charAt(spelling.length() - 1)) == Character
-                .toLowerCase(word.charAt(word.length() - 1))
+                        .toLowerCase(word.charAt(word.length() - 1))
                 && uls == 2
                 && uls < word.length()) {
 
             for (var entry : Rules.FAT_CORRECTION_RULES) {
                 Matcher m = entry._1.matcher(word);
                 if (!m.replaceAll(entry._2).equals(spelling)) {
-                    _logger.trace(String.format("LangProxy.word_we_misspelled(word: %s, spelling: %s) = true", word, spelling));
+                    _logger.trace(String.format("LangProxy.word_we_misspelled(word: %s, spelling: %s) = true", word,
+                            spelling));
                     _logger.debug(String.format("FAT_CORRECTION_RULES (%s) (%s): %s == %s", entry._1, entry._2,
                             m.replaceAll(entry._2), spelling));
                     return true;
@@ -119,7 +120,8 @@ public class LangProxy {
             }
         }
 
-        _logger.trace_info(String.format("normalize(text: '%s', span_size: %d):\t'%s'", text, span_size, to_be_original));
+        _logger.trace_info(
+                String.format("normalize(text: '%s', span_size: %d):\t'%s'", text, span_size, to_be_original));
         _logger.trace("__________ normalize end __________");
         _logger = LangProxy_logger;
         return to_be_original;
@@ -239,11 +241,12 @@ public class LangProxy {
      */
     public static String applyMatch(
             String text, String repl, Pattern regex, Span span) {
-//		_logger.trace(String.format("applyMatch(text, regex: %s, repl %s, span: %s)", regex, repl, span));
+        // _logger.trace(String.format("applyMatch(text, regex: %s, repl %s, span: %s)",
+        // regex, repl, span));
         try {
             var replaced_text = regex.matcher(span.in(text)).replaceAll(repl);
 
-//			_logger.trace(String.format("'%s' -> '%s'", span.in(text), replaced_text));
+            // _logger.trace(String.format("'%s' -> '%s'", span.in(text), replaced_text));
 
             return span.swap(text, replaced_text);
         } catch (Exception exp) {
@@ -277,7 +280,7 @@ public class LangProxy {
     }
 
     public static List<TypoMatch> valid_matches(String text,
-                                                List<TypoMatch> slots, int span_size) throws IOException {
+            List<TypoMatch> slots, int span_size) throws IOException {
         StringSpans texas = new StringSpans(text);
         List<String> mutations = new ArrayList<>(Collections.nCopies(slots.size(), ""));
         List<String> mutations_fail_reason = new ArrayList<>(Collections.nCopies(slots.size(), ""));
@@ -295,7 +298,8 @@ public class LangProxy {
 
             if (newWordSpan.end >= newText.length()) {
                 _logger.error(
-                        "newWordSpan.end >= newText.length() => " + newWordSpan.end + ">=" + newText.length() + "\tnewText="
+                        "newWordSpan.end >= newText.length() => " + newWordSpan.end + ">=" + newText.length()
+                                + "\tnewText="
                                 + newText);
             }
 
@@ -314,8 +318,9 @@ public class LangProxy {
                     && !old_word.equals(new_word)) {
                 mutations.set(match_index, newText);
             } else {
-                mutations_fail_reason.set(match_index, "rule undetectable or modify looks! new word \"" + new_word + "\" != \""
-                        + old_word + "\" original and will be corrected to " + new_word_corrections_mode);
+                mutations_fail_reason.set(match_index,
+                        "rule undetectable or modify looks! new word \"" + new_word + "\" != \""
+                                + old_word + "\" original and will be corrected to " + new_word_corrections_mode);
             }
         }
         List<Integer> ambiguous_invalid_matches = new ArrayList<>();
@@ -333,8 +338,7 @@ public class LangProxy {
         }
         _logger.debug("ambiguous_invalid_matches=" + ambiguous_invalid_matches);
         List<TypoMatch> valid_slots = new ArrayList<>();
-        for (
-                int i = 0; i < slots.size(); i++) {
+        for (int i = 0; i < slots.size(); i++) {
             if (!ambiguous_invalid_matches.contains(i)) {
                 valid_slots.add(slots.get(i));
             }
@@ -343,15 +347,14 @@ public class LangProxy {
 
                 repeat(20) + "valid slots!" + "%".
 
-                repeat(20));
+                        repeat(20));
         _logger.debug("valid_slots=" + valid_slots);
         _logger.debug("\n" + "%".
 
                 repeat(20) + "valid slots!" + "%".
 
-                repeat(20));
-        for (
-                int i = 0; i < slots.size(); i++) {
+                        repeat(20));
+        for (int i = 0; i < slots.size(); i++) {
             _logger.debug(slots.get(i) + " " + mutations.get(i));
         }
         return valid_slots;

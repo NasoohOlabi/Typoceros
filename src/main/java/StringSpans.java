@@ -15,7 +15,7 @@ class StringSpans {
     private List<Span> nonWords;
     private List<Span> nonSpaces;
 
-    private final static Logger _logger = new Logger("./Typoceros/logs/Typoceros.StringSpan");
+    private final static Logger _logger = new Logger("./Typoceros/logs/StringSpan");
 
     public StringSpans() {
     }
@@ -259,11 +259,10 @@ class StringSpans {
         return getWordsStrings().toString();
     }
 
-
-    public Optional<Span> unionIntersects(Span span){
+    public Optional<Span> unionIntersects(Span span) {
         Span acc_span = null;
-        for (var word: getWords()) {
-            if (word.intersects(span)){
+        for (var word : getWords()) {
+            if (word.intersects(span)) {
                 acc_span = (acc_span == null)
                         ? word
                         : acc_span.union(word);

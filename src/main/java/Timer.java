@@ -2,7 +2,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Timer {
-    private final static Logger _logger = new Logger("./Typoceros/logs/Typoceros.Timer");
+    private final static Logger _logger = new Logger("./Typoceros/logs/Timer");
 
     private static final Map<String, Long> startTimes = new HashMap<>();
 

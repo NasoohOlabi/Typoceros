@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class App {
     private static Map<String, Typo> memo = new HashMap<>();
-    private static Logger _logger = new Logger("./Typoceros/logs/Typoceros.App");
+    private static Logger _logger = new Logger("./Typoceros/logs/App");
 
     private static Typo getTypo(String string) throws IOException, IllegalArgumentException {
         if (memo.containsKey(string)) {
@@ -40,11 +40,9 @@ public class App {
                 } else if (command.equalsIgnoreCase("encode")) {
                     bytes = scanner.nextLine();
                     typo = getTypo(string);
-                    var values_remainingBytes = typo.encode_encoder(bytes);
-                    var values = values_remainingBytes._1();
-                    var remainingBytes = values_remainingBytes._2;
-                    System.out.println(typo.encode(values));
-                    System.out.println(remainingBytes);
+                    var encoded_rem = typo.encode(bytes);
+                    System.out.println(encoded_rem._1());
+                    System.out.println(encoded_rem._2);
                 } else if (command.equalsIgnoreCase("decode")) {
                     var originalText_values_bits = Typo.decode(string, null);
                     var originalText = originalText_values_bits._1();

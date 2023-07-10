@@ -21,7 +21,7 @@ public class ListPersistenceManager {
         return itemList.contains(item);
     }
 
-    private final static Logger _logger = new Logger("./Typoceros/logs/Typoceros.ListPersistenceManager");
+    private final static Logger _logger = new Logger("./Typoceros/logs/ListPersistenceManager");
 
     private List<String> loadListFromFile() {
         List<String> list = new ArrayList<>();

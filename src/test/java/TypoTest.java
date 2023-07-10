@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.IntStream;
@@ -15,7 +16,12 @@ import org.junit.Test;
 import io.vavr.Tuple3;
 
 public class TypoTest {
-    private final Logger _logger = new Logger("./Typoceros/logs/Typoceros.TypoTest");
+    private final Logger _logger = new Logger("./Typoceros/logs/TypoTest");
+
+    public static String generateRandomBitStream(int length) {
+        var d = new Date();
+        return generateRandomBitStream(length, d.getTime());
+    }
 
     public static String generateRandomBitStream(int length, long seed) {
 
@@ -115,18 +121,18 @@ public class TypoTest {
         Timer.startTimer("testString: '" + text + "'");
         _logger.info("typo.spaces\t" + typo.getSpaces().toString());
         Timer.prettyPrint("testString: '" + text + "'");
-        var byteList_rem = typo.encode_encoder(bytes);
+        var byteList_rem = Typo.encode_encoder(bytes, typo.getSpaces(), typo.getBits());
+        var byteList = byteList_rem._1;
+        var rem = byteList_rem._2;
         _logger.info("byteList_rem\t" + byteList_rem.toString());
-        var encoded = typo.encode(byteList_rem._1);
+        var encoded = typo.encode(byteList);
         _logger.info("encoded\t" + encoded);
-        var decoded_byteList = Typo.decode(encoded, null);
-        _logger.info("decoded_byteList\t" + decoded_byteList);
+        var decoded_bits = Typo.decode(encoded);
+        _logger.info("decoded_byteList\t" + decoded_bits);
 
-        assertEquals(text, text, decoded_byteList._1);
-        assertEquals(byteList_rem._1.size(), decoded_byteList._2.size());
-        for (int i = 0; i < byteList_rem._1.size(); i++) {
-            assertEquals(byteList_rem._1.get(i), decoded_byteList._2.get(i));
-        }
+        assertEquals(text, text, decoded_bits._1);
+        assertEquals(bytes, decoded_bits._2 + rem);
+
     }
 
     public void testStringExtensive(String text) throws ValueError, IOException {

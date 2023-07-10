@@ -10,7 +10,7 @@ public class Config {
 	public static String dict_file = "./Typoceros/config/dictionary";
 	public static int span_size = 10;
 
-	private final static Logger _logger = new Logger("./Typoceros/logs/Typoceros.Config");
+	private final static Logger _logger = new Logger("./Typoceros/logs/Config");
 
 	public static void sync() {
 		File file = new File(config_file);

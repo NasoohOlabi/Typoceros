@@ -35,20 +35,20 @@ public class Logger {
 		}
 	}
 
-	public void log(String message) {
-		_log(message, logFile);
+	public void log(Object message) {
+		_log(message.toString(), logFile);
 	}
 
-	public void debug(String message) {
-		_log(message, debugFile);
+	public void debug(Object message) {
+		_log(message.toString(), debugFile);
 	}
 
-	public void info(String message) {
-		_log(message, infoFile);
+	public void info(Object message) {
+		_log(message.toString(), infoFile);
 	}
 
-	public void error(String message) {
-		_log(message, errorFile);
+	public void error(Object message) {
+		_log(message.toString(), errorFile);
 	}
 
 	public void error(String message, Throwable exp) {
@@ -70,6 +70,10 @@ public class Logger {
 
 	public void trace(String name, Object value) {
 		_log(name + "=" + value.toString(), traceFile);
+	}
+
+	public void traceSeparatorStart() {
+		_log("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv", traceFile);
 	}
 
 	public void debugSeparatorStart() {
