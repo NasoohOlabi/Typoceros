@@ -360,7 +360,7 @@ public class LangProxy {
         return valid_slots;
     }
 
-    private static boolean sameStartAndEnd(String old_word, String new_word) {
+    public static boolean sameStartAndEnd(String old_word, String new_word) {
         return Character.toLowerCase(new_word.charAt(0)) == Character.toLowerCase(old_word.charAt(0)) &&
                 (Character.toLowerCase(new_word.charAt(new_word.length() - 1)) == Character
                         .toLowerCase(old_word.charAt(old_word.length() - 1)));

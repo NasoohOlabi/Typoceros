@@ -100,9 +100,17 @@ public class ThinLangApi {
 
 	private final static int INTENTIONAL_TYPO_STR_DIST = 1;
 
+	public static boolean upperDistanceEqualsLowerDistance(String word, String typo) {
+		return util.stringMutationDistance(word.toLowerCase(), typo.toLowerCase()) == util.stringMutationDistance(word,
+				typo);
+	}
+
 	public static boolean intentionalTypo(String word, String typo) {
 		return util.stringMutationDistance(word, typo) <= INTENTIONAL_TYPO_STR_DIST
+				&& (!upperDistanceEqualsLowerDistance(word, typo)
+						|| !word.substring(1, 2).equals(typo.substring(1, 2)))
 				&& !word.contains(" ")
+				&& LangProxy.sameStartAndEnd(word, typo)
 				&& !typo.contains(" ");
 	}
 }
