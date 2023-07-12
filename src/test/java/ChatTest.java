@@ -37,7 +37,12 @@ public class ChatTest {
 			"it was nice chatting with you. Have a good day.",
 			"That would be cool to visit. Did you know Iceland has no public rail system and most people travel by air there?" };
 
-	private final Logger _logger = new Logger("./Typoceros/logs/ChatTest");
+	private final Logger _logger = new Logger("ChatTest");
+
+	@Test
+	public void spellWord() throws IOException {
+		_logger.log(ThinLangApi.spellWord("priduce"));
+	}
 
 	@Test
 	public void testTexts() {

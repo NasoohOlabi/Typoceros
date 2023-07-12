@@ -2,8 +2,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Timer {
-    private final static Logger _logger = new Logger("./Typoceros/logs/Timer");
-
     private static final Map<String, Long> startTimes = new HashMap<>();
 
     public static void startTimer(String tag) {
@@ -16,8 +14,8 @@ public class Timer {
         return endTime - startTime;
     }
 
-    public static void prettyPrint(String tag) {
+    public static void prettyPrint(String tag, Logger _logger) {
         Long elapsedTime = Timer.endTimer(tag);
-        _logger.debug(String.format("\t\t\tTimer took %3d ms for '%s' ", elapsedTime, tag));
+        _logger.debug(String.format("\t\tTimer took %3d ms for '%s' ", elapsedTime, tag));
     }
 }

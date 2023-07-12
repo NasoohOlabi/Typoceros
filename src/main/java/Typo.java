@@ -11,7 +11,7 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 
 public class Typo {
-    private final static Logger _logger = new Logger("./Typoceros/logs/Typo");
+    private final static Logger _logger = new Logger("Typo");
     private final String text;
     private List<TypoMatch> _slots = null;
     private List<Integer> _spaces = null;
@@ -75,13 +75,14 @@ public class Typo {
             }
         }
         _spaces = buckets;
-        _logger.debug(_spaces.toString());
+        _logger.info("Spaces=" + _spaces.toString());
+
         return buckets;
     }
 
     public List<Integer> getBits() throws IOException {
         var bits = getSpaces().stream().map(util::log2).collect(Collectors.toList());
-        _logger.debug(bits.toString());
+        _logger.info("Bits=" + bits.toString());
         return bits;
     }
 
@@ -158,7 +159,7 @@ public class Typo {
     public static Tuple3<String, List<Integer>, String> decode(String text, Typo test_self)
             throws IOException {
         String original = LangProxy.normalize(text, getSpanSize());
-        _logger.debug("original=" + original);
+        _logger.info("original=" + original);
         Typo t;
         if (test_self != null) {
             if (!original.equals(test_self.text)) {

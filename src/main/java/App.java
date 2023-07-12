@@ -6,7 +6,7 @@ import java.util.Scanner;
 
 public class App {
     private static Map<String, Typo> memo = new HashMap<>();
-    private static Logger _logger = new Logger("./Typoceros/logs/App");
+    private static Logger _logger = new Logger("App");
 
     private static Typo getTypo(String string) throws IOException, IllegalArgumentException {
         if (memo.containsKey(string)) {

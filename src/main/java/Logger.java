@@ -7,14 +7,27 @@ public class Logger {
 	private final File infoFile;
 	private final File debugFile;
 	private final File errorFile;
+	private final File progressFile;
 	private final File traceFile;
+	private final File masterLog;
+	private final boolean logFileActive = true;
+	private final boolean infoFileActive = true;
+	private final boolean debugFileActive = true;
+	private final boolean errorFileActive = true;
+	private final boolean progressFileActive = true;
+	private final boolean traceFileActive = true;
+	private final boolean masterLogActive = true;
+	private final String basePath = "./Typoceros/logs/";
+
 
 	public Logger(String filePath) {
-		this.logFile = new File(filePath);
-		this.infoFile = new File(filePath + ".info");
-		this.debugFile = new File(filePath + ".debug");
-		this.errorFile = new File(filePath + ".error");
-		this.traceFile = new File(filePath + ".trace");
+		this.logFile = new File(basePath + filePath + ".log");
+		this.infoFile = new File(basePath + filePath + ".info");
+		this.debugFile = new File(basePath + filePath + ".debug");
+		this.errorFile = new File(basePath + filePath + ".error");
+		this.progressFile = new File(basePath + filePath + ".progress");
+		this.traceFile = new File(basePath + filePath + ".trace");
+		this.masterLog = new File(basePath + "Typoceros.log");
 	}
 
 	public void _log(String message, File f) {
@@ -30,21 +43,26 @@ public class Logger {
 			try (var writer = new FileWriter(f, true)) {
 				writer.write(message + end);
 			}
+			if (masterLogActive)
+			try (var writer = new FileWriter(masterLog, true)) {
+				writer.write(message + end);
+			}
 		} catch (IOException e) {
 			System.out.println("An error occurred while writing to the log file: " + e.getMessage());
 		}
 	}
 
 	public void log(Object message) {
+		if (logFileActive)
 		_log(message.toString(), logFile);
 	}
 
 	public void debug(Object message) {
-		_log(message.toString(), debugFile);
+		if (debugFileActive)_log(message.toString(), debugFile);
 	}
 
 	public void info(Object message) {
-		_log(message.toString(), infoFile);
+		if (infoFileActive)_log(message.toString(), infoFile);
 	}
 
 	public void error(Object message) {
@@ -60,28 +78,40 @@ public class Logger {
 	}
 
 	public void trace(String message) {
-		_log(message, traceFile);
+		if (traceFileActive)_log(message, traceFile);
+	}
+	public void progress(String message) {
+		if (progressFileActive)_log(message, progressFile);
 	}
 
 	public void trace_info(String message) {
-		_log(message, traceFile);
-		_log(message, infoFile);
+		trace(message);
+		info(message);
 	}
 
 	public void trace(String name, Object value) {
-		_log(name + "=" + value.toString(), traceFile);
+		trace(name + "=" + value.toString());
 	}
 
 	public void traceSeparatorStart() {
-		_log("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv", traceFile);
+		trace("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+	}
+
+	public void traceSeparatorEnd() {
+		trace("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 	}
 
 	public void debugSeparatorStart() {
-		_log("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv", debugFile);
+		debug("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
 	}
 
 	public void debugSeparatorEnd() {
-		_log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^", debugFile);
+		debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+	}
+
+	public void trace_progress(String message) {
+		trace(message);
+		progress(message);
 	}
 
 }

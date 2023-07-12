@@ -38,7 +38,10 @@ public class Rules {
 
     static List<Tuple2<Pattern, String>> WORD_CORRECTION_RULES = Stream.concat(
             parseRules("anti.variant"),
-            parseRules("anti.misspelling")).map(Rules::compileFirst).collect(Collectors.toList());
+            Stream.concat(
+                    parseRules("anti.misspelling"),
+                    parseRules("anti.grammatical")))
+            .map(Rules::compileFirst).collect(Collectors.toList());
 
     /**
      * these include the count rules and long shift rules
@@ -89,11 +92,12 @@ public class Rules {
         int end = matcher.end();
         String replacement = rule._2;
         var span = Span.of(start, end);
-        matches.add(
-                TypoMatch.of(text,
-                        LangProxy.applyMatch(text, replacement, regex, span),
-                        span,
-                        (x) -> LangProxy.applyMatch(x, replacement, regex, span)));
+        var match = TypoMatch.of(text,
+                LangProxy.applyMatch(text, replacement, regex, span),
+                span,
+                (x) -> LangProxy.applyMatch(x, replacement, regex, span));
+        if (match.isPresent())
+            matches.add(match.get());
     }
 
     static List<TypoMatch> missing_letter_scan(String text) {
@@ -105,8 +109,10 @@ public class Rules {
             int start = matcher.start();
             int end = matcher.end();
             var span = Span.of(start, end);
-            matches.add(
-                    TypoMatch.of(text, span.notIn(text), span, span::notIn));
+            var match = TypoMatch.of(text, span.notIn(text), span, span::notIn);
+            if (match.isPresent())
+                matches.add(
+                        match.get());
         }
 
         return matches;

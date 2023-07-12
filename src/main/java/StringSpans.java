@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
@@ -15,7 +16,7 @@ class StringSpans {
     private List<Span> nonWords;
     private List<Span> nonSpaces;
 
-    private final static Logger _logger = new Logger("./Typoceros/logs/StringSpan");
+    private final static Logger _logger = new Logger("StringSpan");
 
     public StringSpans() {
     }
@@ -269,5 +270,9 @@ class StringSpans {
             }
         }
         return Optional.ofNullable(acc_span);
+    }
+
+    public Stream<Span> IntersectsList(Span span) {
+        return getWords().stream().filter(word -> word.intersects(span));
     }
 }

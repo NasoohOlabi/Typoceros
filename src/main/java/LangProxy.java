@@ -1,12 +1,10 @@
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import org.languagetool.rules.RuleMatch;
 
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
@@ -14,32 +12,9 @@ import io.vavr.Tuple3;
 public class LangProxy {
     private final static ListPersistenceManager dict = new ListPersistenceManager(Config.dict_file);
 
-    private final static Logger LangProxy_logger = new Logger("./Typoceros/logs/LangProxy");
-    private final static Logger normalize_logger = new Logger("./Typoceros/logs/LangProxy.normalize");
+    private final static Logger LangProxy_logger = new Logger("LangProxy");
+    private final static Logger normalize_logger = new Logger("LangProxy.normalize");
     private static Logger _logger = LangProxy_logger;
-
-    public static boolean word_we_misspelled(String word, String spelling) {
-        int uls = util.countUppercaseLetters(word);
-        if (Character.toLowerCase(spelling.charAt(0)) == Character.toLowerCase(word.charAt(0))
-                && Character.toLowerCase(spelling.charAt(spelling.length() - 1)) == Character
-                        .toLowerCase(word.charAt(word.length() - 1))
-                && uls == 2
-                && uls < word.length()) {
-
-            for (var entry : Rules.FAT_CORRECTION_RULES) {
-                Matcher m = entry._1.matcher(word);
-                if (!m.replaceAll(entry._2).equals(spelling)) {
-                    _logger.trace(String.format("LangProxy.word_we_misspelled(word: %s, spelling: %s) = true", word,
-                            spelling));
-                    _logger.debug(String.format("FAT_CORRECTION_RULES (%s) (%s): %s == %s", entry._1, entry._2,
-                            m.replaceAll(entry._2), spelling));
-                    return true;
-                }
-            }
-        }
-        _logger.trace(String.format("LangProxy.word_we_misspelled(word: %s, spelling: %s) = false", word, spelling));
-        return false;
-    }
 
     private static List<Span> getAffectedWords(String text, StringSpans text_sss, List<Span> offsets) {
         _logger.trace(
@@ -60,6 +35,28 @@ public class LangProxy {
         return affected_words;
     }
 
+    public static List<Span> detectErrorsSpans(String text) throws IOException {
+        final StringSpans text_sss = new StringSpans(text);
+
+        return ThinLangApi.correction_rules_subset(text)
+                .stream()
+                .map(Span::fromRule)
+                .flatMap(text_sss::IntersectsList)
+                .filter((potentialTypo) -> {
+                    try {
+                        _logger.trace("potentialTypo", potentialTypo);
+                        var spellings = ThinLangApi.spellWord(potentialTypo.in(text));
+                        _logger.trace("spellings", spellings);
+                        return spellings.size() != 0;
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                    return true;
+                })
+                .collect(Collectors.toList());
+    }
+
     public static String normalize(String text, int span_size) throws IOException {
         return normalize(text, span_size, false);
     }
@@ -75,14 +72,7 @@ public class LangProxy {
         List<Span> chunks = util.chunk(text, span_size);
         _logger.trace("chunks", chunks.toString());
         String to_be_original = text;
-        final StringSpans text_sss = new StringSpans(text);
-        var offsets = ThinLangApi.correction_rules_subset(text)
-                .stream()
-                .map(Span::fromRule)
-                .map(text_sss::unionIntersects)
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toList());
+        var offsets = detectErrorsSpans(text);
         boolean[] empty_chunks = new boolean[chunks.size()];
 
         var offsets_chunks = new ArrayList<List<Tuple2<Span, String>>>();
@@ -91,7 +81,7 @@ public class LangProxy {
 
             for (Span affected_word : offsets) {
                 if (affected_word.intersects(chunk)) {
-                    var affected_word_correction_option = vote_fix_word(affected_word, text);
+                    var affected_word_correction_option = word_correction(affected_word, text);
                     if (affected_word_correction_option.isPresent()) {
                         var affected_word_correction = affected_word_correction_option.get();
                         chunk_offsets.add(new Tuple2<>(affected_word, affected_word_correction));
@@ -127,54 +117,6 @@ public class LangProxy {
         return to_be_original;
     }
 
-    public static Optional<String> vote_fix_word(
-            Span word,
-            String text) throws IOException {
-        _logger.trace("---------------------vote_fix_word---------------------");
-        _logger.trace(String.format("LangProxy.vote_fix_word(word='%s',text='%s'", word.in(text), text));
-        List<String> suggestions = new ArrayList<>();
-        _logger.trace("step 1: give LanguageTool the whole text");
-        var context_suggestions = ThinLangApi.check_pos(word, text);
-        context_suggestions.ifPresent(ruleMatch -> suggestions.addAll(ThinLangApi
-                .filterIntentionalTypos(word.in(text), ruleMatch
-                        .getSuggestedReplacements())));
-        _logger.trace("suggestions", suggestions);
-        _logger.trace("step 2: give LanguageTool the word alone and apply reverse rules and filter them");
-        suggestions.addAll(word_corrections(
-                word.in(text)));
-        _logger.trace("suggestions", suggestions);
-        _logger.trace("step 3: try every correction in context");
-        suggestions.addAll(
-                suggestions
-                        .stream()
-                        .flatMap((correction) -> {
-                            try {
-                                var result = ThinLangApi.check_pos(word,
-                                        word.swap(text, correction));
-                                if (result.isPresent()) {
-                                    return ThinLangApi
-                                            .filterIntentionalTyposStream(word.in(text),
-                                                    result.get().getSuggestedReplacements());
-                                }
-                                return Stream.empty();
-                            } catch (IOException e) {
-                                _logger.error("vote_fix_word", e);
-                                return Stream.empty();
-                            }
-                        }).collect(Collectors.toList()));
-        _logger.trace("suggestions", suggestions);
-        _logger.trace(suggestions.toString());
-        if (suggestions.size() == 0) {
-            _logger.trace("vote_fix_word Out of Suggestions");
-            _logger.trace("Word", word);
-            _logger.trace("Text", text);
-            return Optional.empty();
-        }
-        var most_voted_word = util.mode(suggestions);
-        _logger.trace("most voted word", most_voted_word);
-        return Optional.of(most_voted_word);
-    }
-
     public static String insertCharAtIndex(String str, char ch, int index) {
         if (index < 0 || index > str.length()) {
             throw new IndexOutOfBoundsException("Index is out of bounds");
@@ -184,11 +126,14 @@ public class LangProxy {
         return sb.toString();
     }
 
-    public static List<String> word_corrections(String typo) throws IOException {
-        _logger.trace(String.format("word_corrections(typo: %s)", typo));
-        var suggestions = ThinLangApi.spellWord(typo);
-        _logger.trace("LanguageTool correction", suggestions);
-        List<String> votes = new ArrayList<>(suggestions);
+    public static Optional<String> word_correction(Span word,
+                                                   String text) throws IOException {
+        _logger.trace(String.format("word_correction(word: %s, text: %s)", word, text));
+        var typo = word.in(text);
+        if (TypoMatch.isFirstCharUpperCase(typo))
+            return Optional.empty();
+        _logger.trace("typo", typo);
+        List<String> votes = new ArrayList<>();
         for (var rule : Rules.FAT_CORRECTION_RULES) {
             Matcher matcher = rule._1().matcher(typo);
             while (matcher.find()) {
@@ -219,17 +164,47 @@ public class LangProxy {
         _logger.trace("unfiltered votes: ", votes);
         // if correction rules were false negative
         // so they tried to correct but they were wrong
-        votes.removeIf(vote -> {
-            try {
-                return !ThinLangApi.normal_word(vote);
-            } catch (IOException e) {
-                _logger.error("vote_fix_word", e);
-                return true;
+        // votes are purely absurd strings
+        // but one of them should be correct
+        // so if the LanguageTool is correcting a
+        // fair amount of strings to one of them
+        // then it's probably correct and enough
+        var newVotes = new HashMap<String, Integer>();
+        var enough = Math.min(20, votes.size() / 3);
+        for (int i = 0; i < votes.size(); i++) {
+            var unimportant_suggestions = ThinLangApi.unfilteredSuggestions(votes.get(i));
+            for (var unimportant_suggestion :
+                    unimportant_suggestions) {
+                if (votes.contains(unimportant_suggestion)) {
+                    newVotes.put(unimportant_suggestion,
+                            newVotes.getOrDefault(unimportant_suggestion, 0) + 1);
+                    if (newVotes.get(unimportant_suggestion) >= enough) {
+                        i = votes.size();
+                    }
+                }
             }
+            _logger.trace("enough", enough);
+            _logger.trace("newVotes", newVotes);
+        }
+        votes = new ArrayList<>(newVotes.keySet());
+        _logger.trace("filtered votes", votes);
+        // filter based on context
+        votes.removeIf(suggestion -> {
+            Optional<RuleMatch> opt = Optional.empty();
+            try {
+                opt = ThinLangApi.check_pos(word, word.swap(text, suggestion));
+                _logger.trace(String.format(
+                        "%s = ThinLangApi.check_pos('%s': '%s', '%s');",
+                        opt.toString(), word, word.in(text), word.swap(text, suggestion)));
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            return opt.isPresent();
         });
-        _logger.trace("filtered votes: ", votes);
+        _logger.trace("fit context filtered votes: ", votes);
         _logger.trace("------------ word corrections end ------------");
-        return votes;
+        return Optional.ofNullable(util.mode(votes));
     }
 
     /**
@@ -241,12 +216,12 @@ public class LangProxy {
      */
     public static String applyMatch(
             String text, String repl, Pattern regex, Span span) {
-        // _logger.trace(String.format("applyMatch(text, regex: %s, repl %s, span: %s)",
-        // regex, repl, span));
+        _logger.trace(String.format("applyMatch(text, regex: %s, repl %s, span: %s)",
+                regex, repl, span));
         try {
             var replaced_text = regex.matcher(span.in(text)).replaceAll(repl);
 
-            // _logger.trace(String.format("'%s' -> '%s'", span.in(text), replaced_text));
+            _logger.trace(String.format("'%s' -> '%s'", span.in(text), replaced_text));
 
             return span.swap(text, replaced_text);
         } catch (Exception exp) {
@@ -255,7 +230,7 @@ public class LangProxy {
             _logger.debug("repl:(" + repl + ")");
             _logger.debug("regex:(" + regex + ")");
             _logger.debug("span:(" + span + ")");
-            _logger.error("vote_fix_word", exp);
+            _logger.error("applyMatch", exp);
             throw exp;
         }
     }
@@ -280,12 +255,12 @@ public class LangProxy {
     }
 
     public static List<TypoMatch> valid_matches(String text,
-            List<TypoMatch> slots, int span_size) throws IOException {
+                                                List<TypoMatch> slots, int span_size) throws IOException {
         StringSpans texas = new StringSpans(text);
         List<String> mutations = new ArrayList<>(Collections.nCopies(slots.size(), ""));
         List<String> mutations_fail_reason = new ArrayList<>(Collections.nCopies(slots.size(), ""));
         for (int match_index = 0; match_index < slots.size(); match_index++) {
-            _logger.trace(String.format("checking slot %d/%d", match_index, slots.size()));
+            _logger.trace_progress(String.format("checking slot %d/%d", match_index, slots.size()));
             var match_result = slots.get(match_index);
             var span = match_result.sourceSpan;
             var newText = match_result.after;
@@ -305,22 +280,22 @@ public class LangProxy {
 
             String new_word = newWordSpan.in(newText);
 
-            var new_word_corrections_mode_opt = vote_fix_word(
+            var new_word_correction_mode_opt = word_correction(
                     newWordSpan,
                     newText);
 
-            if (new_word_corrections_mode_opt.isEmpty()) {
+            if (new_word_correction_mode_opt.isEmpty()) {
                 continue;
             }
-            String new_word_corrections_mode = new_word_corrections_mode_opt.get();
+            String new_word_correction_mode = new_word_correction_mode_opt.get();
             if (sameStartAndEnd(old_word, new_word)
-                    && new_word_corrections_mode.equals(old_word)
+                    && new_word_correction_mode.equals(old_word)
                     && !old_word.equals(new_word)) {
                 mutations.set(match_index, newText);
             } else {
                 mutations_fail_reason.set(match_index,
                         "rule undetectable or modify looks! new word \"" + new_word + "\" != \""
-                                + old_word + "\" original and will be corrected to " + new_word_corrections_mode);
+                                + old_word + "\" original and will be corrected to " + new_word_correction_mode);
             }
         }
         List<Integer> ambiguous_invalid_matches = new ArrayList<>();
@@ -347,13 +322,13 @@ public class LangProxy {
 
                 repeat(20) + "valid slots!" + "%".
 
-                        repeat(20));
+                repeat(20));
         _logger.debug("valid_slots=" + valid_slots);
         _logger.debug("\n" + "%".
 
                 repeat(20) + "valid slots!" + "%".
 
-                        repeat(20));
+                repeat(20));
         for (int i = 0; i < slots.size(); i++) {
             _logger.debug(slots.get(i) + " " + mutations.get(i));
         }

@@ -1,7 +1,7 @@
 n't(\s|$)	nt$1	# don't => dont
 've(\s|$)	ve$1	# should've shouldve
 (\s|^)I'm(\s|$)	$1Im$2	# I'm => Im
-\S's(\s|$)	s$1	# Jack's => Jacks
+(\S)'s(\s|$)	$1s$2	# Jack's => Jacks
 ((?:\s|^)[Ii])ts(\s|$)	$1t's$2	# its => it's
 ((?:\s|^)[Oo])nes(\s|$)	$1ne's$2	# ones => one's
 ((?:\s|^)[Yy])our(\s|$)	$1ou're$2	# your => you're
