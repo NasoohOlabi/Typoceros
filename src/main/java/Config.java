@@ -25,14 +25,14 @@ public class Config {
 			try {
 				file.createNewFile();
 				FileWriter writer = new FileWriter(file);
-				writer.write("span_size=" + span_size);
-				writer.write("logFileActive=" + logFileActive);
-				writer.write("infoFileActive=" + infoFileActive);
-				writer.write("debugFileActive=" + debugFileActive);
-				writer.write("errorFileActive=" + errorFileActive);
-				writer.write("progressFileActive=" + progressFileActive);
-				writer.write("traceFileActive=" + traceFileActive);
-				writer.write("masterLogActive=" + masterLogActive);
+				writer.write("span_size=" + span_size + "\n");
+				writer.write("logFileActive=" + logFileActive + "\n");
+				writer.write("infoFileActive=" + infoFileActive + "\n");
+				writer.write("debugFileActive=" + debugFileActive + "\n");
+				writer.write("errorFileActive=" + errorFileActive + "\n");
+				writer.write("progressFileActive=" + progressFileActive + "\n");
+				writer.write("traceFileActive=" + traceFileActive + "\n");
+				writer.write("masterLogActive=" + masterLogActive + "\n");
 				writer.close();
 			} catch (IOException e) {
 				_logger.debug("Error writing file: " + e.getMessage());
