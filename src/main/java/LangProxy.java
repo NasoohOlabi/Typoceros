@@ -128,10 +128,9 @@ public class LangProxy {
 
     public static Optional<String> word_correction(Span word,
                                                    String text) throws IOException {
+        Timer.startTimer("LangProxy.word_correction");
         _logger.trace(String.format("word_correction(word: %s, text: %s)", word, text));
         var typo = word.in(text);
-        if (TypoMatch.isFirstCharUpperCase(typo))
-            return Optional.empty();
         _logger.trace("typo", typo);
         List<String> votes = new ArrayList<>();
         for (var rule : Rules.FAT_CORRECTION_RULES) {
@@ -162,49 +161,33 @@ public class LangProxy {
         }
 
         _logger.trace("unfiltered votes: ", votes);
-        // if correction rules were false negative
-        // so they tried to correct but they were wrong
-        // votes are purely absurd strings
-        // but one of them should be correct
-        // so if the LanguageTool is correcting a
-        // fair amount of strings to one of them
-        // then it's probably correct and enough
-        var newVotes = new HashMap<String, Integer>();
-        var enough = Math.min(20, votes.size() / 3);
+        var election = new Election(votes.size(),typo);
+        var midTerm = votes.size() / 2;
+        Collections.shuffle(votes);
         for (int i = 0; i < votes.size(); i++) {
-            var unimportant_suggestions = ThinLangApi.unfilteredSuggestions(votes.get(i));
+            var replacement_updatedString = word.swapAndUpdate(text,votes.get(i));
+            var replacement = replacement_updatedString._1;
+            var updatedString = replacement_updatedString._2;
+            var unimportant_suggestions = ThinLangApi.suggestionsForWord(replacement,updatedString);
+            if (unimportant_suggestions.isPresent())
             for (var unimportant_suggestion :
-                    unimportant_suggestions) {
+                    unimportant_suggestions.get()) {
                 if (votes.contains(unimportant_suggestion)) {
-                    newVotes.put(unimportant_suggestion,
-                            newVotes.getOrDefault(unimportant_suggestion, 0) + 1);
-                    if (newVotes.get(unimportant_suggestion) >= enough) {
+                    election.addVote(unimportant_suggestion);
+                    if (election.getCurrentVotes() > Config.max_population
+                    && election.getWinner().isPresent()) {
+                        // exit outer loop
                         i = votes.size();
                     }
                 }
             }
-            _logger.trace("enough", enough);
-            _logger.trace("newVotes", newVotes);
         }
-        votes = new ArrayList<>(newVotes.keySet());
-        _logger.trace("filtered votes", votes);
-        // filter based on context
-        votes.removeIf(suggestion -> {
-            Optional<RuleMatch> opt = Optional.empty();
-            try {
-                opt = ThinLangApi.check_pos(word, word.swap(text, suggestion));
-                _logger.trace(String.format(
-                        "%s = ThinLangApi.check_pos('%s': '%s', '%s');",
-                        opt.toString(), word, word.in(text), word.swap(text, suggestion)));
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-            return opt.isPresent();
-        });
-        _logger.trace("fit context filtered votes: ", votes);
+            _logger.trace(election.report());
+        var winner = election.getWinner();
+        _logger.trace("fit context election winner: ", winner);
         _logger.trace("------------ word corrections end ------------");
-        return Optional.ofNullable(util.mode(votes));
+        Timer.prettyPrint("LangProxy.word_correction",_logger);
+        return winner;
     }
 
     /**

@@ -19,11 +19,6 @@ public class App {
     }
 
     public static void main(String[] args) {
-        // Create a File object representing the directory you want to create
-        new File("./Typoceros").mkdirs();
-        new File("./Typoceros/config").mkdirs();
-        new File("./Typoceros/logs").mkdirs();
-
         String command;
         String string;
         String bytes;

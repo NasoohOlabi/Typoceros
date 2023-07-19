@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.junit.Before;
 import org.junit.Test;
 
 public class ChatTest {
@@ -38,7 +39,16 @@ public class ChatTest {
 			"That would be cool to visit. Did you know Iceland has no public rail system and most people travel by air there?" };
 
 	private final Logger _logger = new Logger("ChatTest");
+	private static boolean setUpIsDone = false;
 
+	@Before
+	public void setUp() {
+		if (setUpIsDone) {
+			return;
+		}
+		Config.sync();
+		setUpIsDone = true;
+	}
 	@Test
 	public void spellWord() throws IOException {
 		_logger.log(ThinLangApi.spellWord("priduce"));

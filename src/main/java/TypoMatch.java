@@ -15,19 +15,8 @@ public class TypoMatch {
         this.makeTypoInOriginal = makeTypoInOriginal;
     }
 
-    public static boolean isFirstCharUpperCase(String str) {
-        if (str != null && !str.isEmpty()) {
-            char firstChar = str.charAt(0);
-            return Character.isUpperCase(firstChar);
-        }
-        return false;
-    }
-
-    public static Optional<TypoMatch> of(String text, String after, Span sourceSpan, Function<String, String> apply) {
-        if (isFirstCharUpperCase(sourceSpan.in(text)))
-            return Optional.empty();
-        else
-            return Optional.of(new TypoMatch(text, after, sourceSpan, apply));
+    public static TypoMatch of(String text, String after, Span sourceSpan, Function<String, String> apply) {
+        return new TypoMatch(text, after, sourceSpan, apply);
     }
 
     @Override

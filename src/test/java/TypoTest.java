@@ -11,12 +11,23 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 //
+import org.junit.Before;
 import org.junit.Test;
 
 import io.vavr.Tuple3;
 
 public class TypoTest {
     private final Logger _logger = new Logger("TypoTest");
+    private static boolean setUpIsDone = false;
+
+    @Before
+    public void setUp() {
+        if (setUpIsDone) {
+            return;
+        }
+        Config.sync();
+        setUpIsDone = true;
+    }
 
     public static String generateRandomBitStream(int length) {
         var d = new Date();
@@ -119,13 +130,12 @@ public class TypoTest {
     }
 
     public Integer testString(String text, String bytes, boolean fast) throws ValueError, IOException {
+        Timer.startTimer("TypoTest.testString");
         _logger.info("#".repeat(25) + "\nTest String\n" + "#".repeat(25));
         _logger.info("text='" + text + "'");
         _logger.info("bytes='" + bytes + "'");
         var typo = new Typo(text);
-        Timer.startTimer("testString: '" + text + "'");
         _logger.info("typo.spaces\t" + typo.getSpaces().toString());
-        Timer.prettyPrint("testString: '" + text + "'", _logger);
         var byteList_rem = Typo.encode_encoder(bytes, typo.getSpaces(), typo.getBits());
         var byteList = byteList_rem._1;
         var rem = byteList_rem._2;
@@ -134,6 +144,7 @@ public class TypoTest {
         _logger.info("encoded\t" + encoded);
         var decoded_bits = Typo.decode(encoded, typo);
         _logger.info("decoded_byteList\t" + decoded_bits);
+        Timer.prettyPrint("TypoTest.testString", _logger);
 
         assertEquals(text, text, decoded_bits._1);
         assertEquals(bytes, decoded_bits._3 + rem);
@@ -144,15 +155,11 @@ public class TypoTest {
         _logger.info("#".repeat(25) + "\nTest String\n" + "#".repeat(25));
         _logger.info("text='" + text + "'");
         var typo = new Typo(text);
-        Timer.startTimer("testString: '" + text + "'");
         _logger.info("typo.spaces\t" + typo.getSpaces().toString());
-        Timer.prettyPrint("testString: '" + text + "'", _logger);
         final String sep = "v".repeat(55);
         spacesTest(typo.getSpaces(), 140).forEach(values -> {
             _logger.info(sep);
             _logger.info("values: " + values);
-            Timer.startTimer(
-                    "testString: '" + text + "' values: " + values.toString());
             String encoded = null;
             try {
                 encoded = typo.encode(values);
@@ -174,8 +181,6 @@ public class TypoTest {
             for (int i = 0; i < values.size(); i++) {
                 assertEquals(values.get(i), decoded_byteList._2.get(i));
             }
-            Timer.prettyPrint(
-                    "testString: '" + text + "' values: " + values, _logger);
         });
     }
 

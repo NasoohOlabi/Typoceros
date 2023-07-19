@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import io.vavr.Tuple2;
@@ -17,6 +18,16 @@ import io.vavr.Tuple2;
 public class BenchmarkChatTest {
 
 	private final Logger _logger = new Logger("ChatTest");
+	private static boolean setUpIsDone = false;
+
+	@Before
+	public void setUp() {
+		if (setUpIsDone) {
+			return;
+		}
+		Config.sync();
+		setUpIsDone = true;
+	}
 
 	public String stripQuotes(String s) {
 		if (s.startsWith("\""))

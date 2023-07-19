@@ -96,8 +96,7 @@ public class Rules {
                 LangProxy.applyMatch(text, replacement, regex, span),
                 span,
                 (x) -> LangProxy.applyMatch(x, replacement, regex, span));
-        if (match.isPresent())
-            matches.add(match.get());
+        matches.add(match);
     }
 
     static List<TypoMatch> missing_letter_scan(String text) {
@@ -110,9 +109,7 @@ public class Rules {
             int end = matcher.end();
             var span = Span.of(start, end);
             var match = TypoMatch.of(text, span.notIn(text), span, span::notIn);
-            if (match.isPresent())
-                matches.add(
-                        match.get());
+            matches.add(match);
         }
 
         return matches;

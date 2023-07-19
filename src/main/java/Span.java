@@ -1,6 +1,7 @@
 import java.util.Optional;
 import java.util.function.Function;
 
+import io.vavr.Tuple2;
 import org.languagetool.rules.RuleMatch;
 
 public class Span {
@@ -67,6 +68,10 @@ public class Span {
         return text.substring(0, start) + repl + text.substring(end);
     }
 
+    public Tuple2<Span, String> swapAndUpdate(String text, String repl) {
+        return new Tuple2<>(Span.of(start, start + repl.length()), text.substring(0, start) + repl + text.substring(end));
+    }
+
     public Span map(Function<Integer, Integer> f) {
         return Span.of(f.apply(start), f.apply(end));
     }
@@ -76,7 +81,7 @@ public class Span {
     }
 
     public Span union(Span other) {
-        return Span.of(Math.min(this.getStart(),other.getStart()),
-                Math.max(this.getEnd(),other.getEnd()));
+        return Span.of(Math.min(this.getStart(), other.getStart()),
+                Math.max(this.getEnd(), other.getEnd()));
     }
 }

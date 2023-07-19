@@ -1,6 +1,10 @@
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class Logger {
 	private final File logFile;
@@ -10,6 +14,7 @@ public class Logger {
 	private final File progressFile;
 	private final File traceFile;
 	private final File masterLog;
+	private final File masterStackTrace;
 	private final String basePath = "./Typoceros/logs/";
 
 	public Logger(String filePath) {
@@ -20,6 +25,7 @@ public class Logger {
 		this.progressFile = new File(basePath + filePath + ".progress");
 		this.traceFile = new File(basePath + filePath + ".trace");
 		this.masterLog = new File(basePath + "Typoceros.log");
+		this.masterStackTrace = new File(basePath + "Typoceros.stack.trace");
 	}
 
 	public void _log(String message, File f) {
@@ -27,6 +33,13 @@ public class Logger {
 	}
 
 	public void _log(String message, File f, String end) {
+		List<String> calls = Arrays.stream((new Exception()).getStackTrace())
+				.filter(stackTraceElement -> !stackTraceElement.getClassName().equals("Logger")).limit(5).map(x->
+				String.format("%s.%s",x.getClassName(),x.getMethodName())
+		).collect(Collectors.toList());
+		Collections.reverse(calls);
+		String stack = String.join("\t->\t",calls);
+
 		try {
 			if (!f.exists()) {
 				f.createNewFile();
@@ -38,6 +51,10 @@ public class Logger {
 			if (Config.masterLogActive)
 				try (var writer = new FileWriter(masterLog, true)) {
 					writer.write(message + end);
+				}
+			if (Config.masterStackTrace)
+				try (var writer = new FileWriter(masterStackTrace, true)) {
+					writer.write(stack+end);
 				}
 		} catch (IOException e) {
 			System.out.println("An error occurred while writing to the log file: " + e.getMessage());

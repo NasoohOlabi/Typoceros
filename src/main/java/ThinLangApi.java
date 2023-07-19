@@ -19,59 +19,62 @@ public class ThinLangApi {
     }
 
     public static List<RuleMatch> check(String text) throws IOException {
-        Timer.startTimer("check(" + text + ")");
+        Timer.startTimer("ThinLangApi.check");
         var result = langTool.check(text);
-        Timer.prettyPrint("check(" + text + ")", _logger);
+        Timer.prettyPrint("ThinLangApi.check", _logger);
         return result;
+    }
+
+    public static String rule2String(RuleMatch rule) {
+        return String.format(
+                "Rule{span=%s, type=%s, replacements=%s, message=%s}", Span.fromRule(rule).toString(),
+                rule.getRule().getCategory().getId().toString(), rule.getSuggestedReplacements().toString(),
+                rule.getMessage());
     }
 
     public static String rules2String(List<RuleMatch> rules) {
         var descriptiveStrings = new ArrayList<String>(rules.size());
         for (var rule : rules) {
-            descriptiveStrings.add(String.format(
-                    "Rule{span=%s, type=%s, replacements=%s, message=%s, type=%s}", Span.fromRule(rule).toString(),
-                    rule.getRule().getCategory().getId().toString(), rule.getSuggestedReplacements().toString(),
-                    rule.getMessage(), rule.getType()));
+            descriptiveStrings.add(rule2String(rule));
         }
         return "[" + String.join(", ", descriptiveStrings) + "]";
     }
 
     public static List<RuleMatch> correction_rules_subset(String text) throws IOException {
-        _logger.trace("------------------------------------------");
-        _logger.trace(String.format("correction_rules_subset(text: %s)", text));
         List<RuleMatch> matches = check(text);
-        _logger.trace("matches", rules2String(matches));
         var subset = new ArrayList<RuleMatch>();
         for (RuleMatch match : matches) {
             if (List.of("TYPOS", "SPELLING", "GRAMMAR", "TYPOGRAPHY")
                     .contains(match.getRule().getCategory().getId().toString())) {
                 subset.add(match);
-            } else {
-                _logger.trace("Discarded" + match.getRule().getCategory().getId() + " match=" + match);
             }
         }
-        _logger.trace("subset", rules2String(subset));
-        _logger.trace("------------------------------------------");
+        _logger.trace(
+                String.format("correction_rules_subset(text: %s)", text)
+                        + " = subset("
+                        + rules2String(matches) + ") = " + rules2String(subset));
         return subset;
     }
 
     public static Optional<RuleMatch> check_pos(Span word, String text) throws IOException {
         var check = correction_rules_subset(text);
-        _logger.trace("check_pos('" + word + "', '" + text + "'): " + check);
         for (var rule : check) {
             var ruleSpan = Span.fromRule(rule);
             if (word.contain(ruleSpan) || word.intersects(ruleSpan)) {
+                _logger.trace("check_pos('"
+                        + word
+                        + "', '"
+                        + text + "') = pick("
+                        + rules2String(check) + ") = " + rule2String(rule));
 
-                _logger.trace(
-                        "rule related to word " + word + " Rule " + ruleSpan);
                 return Optional.of(rule);
-            } else {
-                _logger.trace(
-                        "rule not related to word " + word + " Rule " + ruleSpan);
-                _logger.trace(rule.toString());
             }
         }
         return Optional.empty();
+    }
+
+    public static Optional<List<String>> suggestionsForWord(Span word, String text) throws IOException {
+        return check_pos(word, text).map(RuleMatch::getSuggestedReplacements);
     }
 
     public static List<String> spellWord(String word) throws IOException {
@@ -87,7 +90,7 @@ public class ThinLangApi {
         List<RuleMatch> result = correction_rules_subset(word);
         if (result.size() > 1) {
             _logger.error("unfiltered Suggestions are more than one for one word '"
-            +word +"' "+rules2String(result) );
+                    + word + "' " + rules2String(result));
         }
         if (result.size() > 0) {
 
