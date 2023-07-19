@@ -2,6 +2,10 @@
 
 Steganography Using Typos. We all make misstakes
 
+## Links
+
+[Stegasus](https://github.com/NasoohOlabi/Stegasus) Parent Steganography Engine with paper and links
+
 ## Still in Development
 
 - [X] Decoder shouldn't know the original_string
