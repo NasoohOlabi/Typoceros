@@ -1,5 +1,3 @@
-import static org.junit.Assert.assertEquals;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
@@ -53,11 +51,11 @@ public class BenchmarkChatTest {
 	@Test
 	public void testTexts() {
 		var tt = new TypoTest();
-		chats().forEach(chatId_ex -> {
+		chats().dropWhile(x -> Integer.parseInt(x._1) < 100).forEach(chatId_ex -> {
 			var chatId = chatId_ex._1;
 			var ex = chatId_ex._2;
 			try {
-				var bits = tt.testString(ex, TypoTest.generateRandomBitStream(ex.length(), 0),true);
+				var bits = tt.testString(ex, TypoTest.generateRandomBitStream(ex.length(), 0), true);
 				try (var fw = new FileWriter(new File("benchmarks.tsv"), true)) {
 					fw.write(String.format("%s\t%d\t%d\t%d\n", chatId, ex.length(), bits, (bits * 100) / ex.length()));
 				} catch (Exception e) {

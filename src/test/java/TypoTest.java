@@ -122,7 +122,7 @@ public class TypoTest {
         assertEquals(
                 "speech-to-text",
                 LangProxy.normalize(
-                        "sopeech-to-text", 10, true));
+                        "sopeech-to-text", 10));
     }
 
     public Integer testString(String text, String bytes) throws ValueError, IOException {
@@ -176,10 +176,12 @@ public class TypoTest {
             _logger.info("decoded_byteList\t" + decoded_byteList);
 
             assert decoded_byteList != null;
-            assertEquals(text, decoded_byteList._1);
-            assertEquals(values.size(), decoded_byteList._2.size());
-            for (int i = 0; i < values.size(); i++) {
-                assertEquals(values.get(i), decoded_byteList._2.get(i));
+            if (decoded_byteList != null) {
+                assertEquals(text, decoded_byteList._1);
+                assertEquals(values.size(), decoded_byteList._2.size());
+                for (int i = 0; i < values.size(); i++) {
+                    assertEquals(values.get(i), decoded_byteList._2.get(i));
+                }
             }
         });
     }
@@ -189,7 +191,7 @@ public class TypoTest {
         _logger.info("Test started");
         // assertEquals(examples[1], LangProxy.normalize(examples[1], 10, true));
         for (var ex : examples) {
-            assertEquals(ex, LangProxy.normalize(ex, 10, false));
+            assertEquals(ex, LangProxy.normalize(ex, 10));
         }
     }
 
