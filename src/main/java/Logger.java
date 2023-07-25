@@ -16,6 +16,7 @@ public class Logger {
 	private final File masterLog;
 	private final File masterStackTrace;
 	private final String basePath = "./Typoceros/logs/";
+	private boolean skipMain = false;
 
 	public Logger(String filePath) {
 		this.logFile = new File(basePath + filePath + ".log");
@@ -34,11 +35,10 @@ public class Logger {
 
 	public void _log(String message, File f, String end) {
 		List<String> calls = Arrays.stream((new Exception()).getStackTrace())
-				.filter(stackTraceElement -> !stackTraceElement.getClassName().equals("Logger")).limit(5).map(x->
-				String.format("%s.%s",x.getClassName(),x.getMethodName())
-		).collect(Collectors.toList());
+				.filter(stackTraceElement -> !stackTraceElement.getClassName().equals("Logger")).limit(5)
+				.map(x -> String.format("%s.%s", x.getClassName(), x.getMethodName())).collect(Collectors.toList());
 		Collections.reverse(calls);
-		String stack = String.join("\t->\t",calls);
+		String stack = String.join("\t->\t", calls);
 
 		try {
 			if (!f.exists()) {
@@ -52,9 +52,9 @@ public class Logger {
 				try (var writer = new FileWriter(masterLog, true)) {
 					writer.write(message + end);
 				}
-			if (Config.masterStackTrace)
+			if (Config.masterStackTrace && !skipMain)
 				try (var writer = new FileWriter(masterStackTrace, true)) {
-					writer.write(stack+end);
+					writer.write(stack + end);
 				}
 		} catch (IOException e) {
 			System.out.println("An error occurred while writing to the log file: " + e.getMessage());
@@ -126,6 +126,11 @@ public class Logger {
 	public void trace_progress(String message) {
 		trace(message);
 		progress(message);
+	}
+
+	public Logger setSkipMain(boolean value) {
+		this.skipMain = value;
+		return this;
 	}
 
 }
