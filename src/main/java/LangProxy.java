@@ -264,7 +264,7 @@ public class LangProxy {
 						"previous slot yields the same typo");
 				ambiguous_invalid_matches.add(i);
 			} else {
-				var normalized = normalize(text, span_size);
+				var normalized = normalize(new_string, span_size);
 				if (!normalized.equals(text)) {
 					_logger.debug("mutation '" + new_string + "' is ambiguous because " +
 							"It normalizes to '" + normalized + "' while it should normalize to '" + text + "'");
