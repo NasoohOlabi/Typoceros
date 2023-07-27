@@ -80,6 +80,7 @@ public class Logger {
     }
 
     private Logger(String filePath) {
+        // TODO: create file on write not here!!!
         this.logFile = createWriter(basePath + filePath + ".log");
         if (this.logFile == null)
             Config.logFileActive = false;
