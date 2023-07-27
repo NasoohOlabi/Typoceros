@@ -12,8 +12,8 @@ import io.vavr.Tuple3;
 public class LangProxy {
     private final static ListPersistenceManager dict = new ListPersistenceManager(Config.dict_file);
 
-    private final static Logger LangProxy_logger = new Logger("LangProxy");
-    private final static Logger normalize_logger = new Logger("LangProxy.normalize");
+    private final static Logger LangProxy_logger = Logger.named("LangProxy");
+    private final static Logger normalize_logger = Logger.named("LangProxy.normalize");
     private static Logger _logger = LangProxy_logger;
 
     private static List<Span> getAffectedWords(String text, StringSpans text_sss, List<Span> offsets) {

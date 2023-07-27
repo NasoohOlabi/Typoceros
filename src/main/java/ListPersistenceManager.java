@@ -21,7 +21,7 @@ public class ListPersistenceManager {
         return itemList.contains(item);
     }
 
-    private final static Logger _logger = new Logger("ListPersistenceManager");
+    private final static Logger _logger = Logger.named("ListPersistenceManager");
 
     private List<String> loadListFromFile() {
         List<String> list = new ArrayList<>();

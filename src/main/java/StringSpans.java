@@ -16,7 +16,7 @@ class StringSpans {
     private List<Span> nonWords;
     private List<Span> nonSpaces;
 
-    private final static Logger _logger = new Logger("StringSpan");
+    private final static Logger _logger = Logger.named("StringSpan");
 
     public StringSpans() {
     }

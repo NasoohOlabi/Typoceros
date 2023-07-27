@@ -38,7 +38,7 @@ public class ChatTest {
 			"it was nice chatting with you. Have a good day.",
 			"That would be cool to visit. Did you know Iceland has no public rail system and most people travel by air there?" };
 
-	private final Logger _logger = new Logger("ChatTest");
+	private final Logger _logger = Logger.named("ChatTest");
 	private static boolean setUpIsDone = false;
 
 	@Before

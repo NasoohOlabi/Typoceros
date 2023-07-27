@@ -11,7 +11,7 @@ import org.languagetool.rules.RuleMatch;
 
 public class ThinLangApi {
     private static final JLanguageTool langTool = new JLanguageTool(new AmericanEnglish());
-    private final static Logger _logger = new Logger("ThinLangApi");
+    private final static Logger _logger = Logger.named("ThinLangApi");
 
     public static boolean isNormalWord(String word) throws IOException {
         List<RuleMatch> matches = correction_rules_subset(word);

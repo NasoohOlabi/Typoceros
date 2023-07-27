@@ -17,7 +17,7 @@ import io.vavr.Tuple2;
 
 public class BenchmarkChatTest {
 
-	private final Logger _logger = new Logger("ChatTest");
+	private final Logger _logger = Logger.named("ChatTest");
 	private static boolean setUpIsDone = false;
 
 	@Before

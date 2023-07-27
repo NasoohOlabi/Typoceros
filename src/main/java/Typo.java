@@ -11,7 +11,7 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 
 public class Typo {
-    private final static Logger _logger = new Logger("Typo");
+    private final static Logger _logger = Logger.named("Typo");
     private final String text;
     private List<TypoMatch> _slots = null;
     private List<Integer> _spaces = null;

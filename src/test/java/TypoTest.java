@@ -17,7 +17,7 @@ import org.junit.Test;
 import io.vavr.Tuple3;
 
 public class TypoTest {
-    private final Logger _logger = new Logger("TypoTest");
+    private final Logger _logger = Logger.named("TypoTest");
     private static boolean setUpIsDone = false;
 
     @Before

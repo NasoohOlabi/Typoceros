@@ -5,20 +5,14 @@ import java.util.Map;
 import java.util.Scanner;
 
 public class App {
-    private static Map<String, Typo> memo = new HashMap<>();
-    private static Logger _logger = new Logger("App");
+    private static final Logger _logger = Logger.named("App");
 
     private static Typo getTypo(String string) throws IOException, IllegalArgumentException {
-        if (memo.containsKey(string)) {
-            return memo.get(string);
-        }
         Typo.setSpanSize(Config.span_size);
-        Typo typo = new Typo(string);
-        memo.put(string, typo);
-        return typo;
+        return new Typo(string);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         String command;
         String string;
         String bytes;
@@ -49,7 +43,7 @@ public class App {
         } catch (IllegalArgumentException | IOException | ValueError e) {
             _logger.error("App in main ", e);
         } finally {
-            // Config.closeLogs();
+            Logger.closeAll();
         }
     }
 }

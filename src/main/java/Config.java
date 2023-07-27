@@ -20,7 +20,7 @@ public class Config {
     public static double min_winning_percentage = 0.5;
     public static int max_population = 23;
 
-    private final static Logger _logger = new Logger("Config");
+    private final static Logger _logger = Logger.named("Config");
 
     public static void sync() {
         // Create a File object representing the directory you want to create

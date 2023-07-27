@@ -7,7 +7,7 @@ public class Election {
     public final int population;
     public final String wordInQuestion;
     private int currentVotes = 0;
-    private final Logger _logger = new Logger("Election");
+    private final Logger _logger = Logger.named("Election");
     private Optional<String> winner = Optional.empty();
 
     public Election(int population, String wordInQuestion) {
