@@ -19,9 +19,9 @@ public class ThinLangApi {
     }
 
     public static List<RuleMatch> check(String text) throws IOException {
-        Timer.startTimer("ThinLangApi.check");
+        // Timer.startTimer("ThinLangApi.check");
         var result = langTool.check(text);
-        Timer.prettyPrint("ThinLangApi.check", _logger);
+        // Timer.prettyPrint("ThinLangApi.check", _logger);
         return result;
     }
 
@@ -126,7 +126,7 @@ public class ThinLangApi {
     public static boolean upperDistanceEqualsLowerDistance(String word, String typo) {
         return util.stringMutationDistance(word.toLowerCase(), typo
                 .toLowerCase()) == util.stringMutationDistance(word.toUpperCase(),
-                typo.toUpperCase());
+                        typo.toUpperCase());
     }
 
     public static boolean intentionalTypo(String word, String typo) {
