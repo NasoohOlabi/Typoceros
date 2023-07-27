@@ -3,190 +3,134 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class Logger {
-    private final FileWriter logFile;
-    private final FileWriter infoFile;
-    private final FileWriter debugFile;
-    private final FileWriter errorFile;
-    private final FileWriter progressFile;
-    private final FileWriter traceFile;
-    private final FileWriter masterLog;
-    private final FileWriter masterStackTrace;
-    private final String basePath = "./Typoceros/logs/";
+	private final File logFile;
+	private final File infoFile;
+	private final File debugFile;
+	private final File errorFile;
+	private final File progressFile;
+	private final File traceFile;
+	private final File masterLog;
+	private final File masterStackTrace;
+	private final String basePath = "./Typoceros/logs/";
+	private boolean skipMain = false;
 
-    private static final HashMap<String, Logger> _loggers = new HashMap<>();
+	public Logger(String filePath) {
+		this.logFile = new File(basePath + filePath + ".log");
+		this.infoFile = new File(basePath + filePath + ".info");
+		this.debugFile = new File(basePath + filePath + ".debug");
+		this.errorFile = new File(basePath + filePath + ".error");
+		this.progressFile = new File(basePath + filePath + ".progress");
+		this.traceFile = new File(basePath + filePath + ".trace");
+		this.masterLog = new File(basePath + "Typoceros.log");
+		this.masterStackTrace = new File(basePath + "Typoceros.stack.trace");
+	}
 
-    public static Logger named(String name) {
-        var logger = new Logger(name);
-        _loggers.put(name, logger);
-        return logger;
-    }
+	public void _log(String message, File f) {
+		_log(message, f, "\n");
+	}
 
-    public static void closeAll() throws IOException {
-        for (var l :
-                _loggers.values()) {
-            l.close();
-        }
-    }
+	public void _log(String message, File f, String end) {
+		List<String> calls = Arrays.stream((new Exception()).getStackTrace())
+				.filter(stackTraceElement -> !stackTraceElement.getClassName().equals("Logger")).limit(5)
+				.map(x -> String.format("%s.%s", x.getClassName(), x.getMethodName())).collect(Collectors.toList());
+		Collections.reverse(calls);
+		String stack = String.join("\t->\t", calls);
 
-    private void close() throws IOException {
-        if (logFile != null)
-            logFile.close();
-        if (infoFile != null)
-            infoFile.close();
-        if (debugFile != null)
-            debugFile.close();
-        if (errorFile != null)
-            errorFile.close();
-        if (progressFile != null)
-            progressFile.close();
-        if (traceFile != null)
-            traceFile.close();
-        if (masterLog != null)
-            masterLog.close();
-        if (masterStackTrace != null)
-            masterStackTrace.close();
-    }
+		try {
+			if (!f.exists()) {
+				f.createNewFile();
+			}
 
-    private static FileWriter createWriter(String path) {
-        File f = new File(path);
-        if (!f.exists()) {
-            try {
-                f.createNewFile();
-            } catch (IOException e) {
-                return null;
-            }
-        }
-        FileWriter writer = null;
-        try {
-            writer = new FileWriter(f, true);
-        } catch (IOException e) {
-            return null;
-        }
-        return writer;
-    }
+			try (var writer = new FileWriter(f, true)) {
+				writer.write(message + end);
+			}
+			if (Config.masterLogActive)
+				try (var writer = new FileWriter(masterLog, true)) {
+					writer.write(message + end);
+				}
+			if (Config.masterStackTrace && !skipMain)
+				try (var writer = new FileWriter(masterStackTrace, true)) {
+					writer.write(stack + end);
+				}
+		} catch (IOException e) {
+			System.out.println("An error occurred while writing to the log file: " + e.getMessage());
+		}
+	}
 
-    private Logger(String filePath) {
-        this.logFile = createWriter(basePath + filePath + ".log");
-        if (this.logFile == null)
-            Config.logFileActive = false;
-        this.infoFile = createWriter(basePath + filePath + ".info");
-        if (this.infoFile == null)
-            Config.infoFileActive = false;
-        this.debugFile = createWriter(basePath + filePath + ".debug");
-        if (this.debugFile == null)
-            Config.debugFileActive = false;
-        this.errorFile = createWriter(basePath + filePath + ".error");
-        if (this.errorFile == null)
-            Config.errorFileActive = false;
-        this.progressFile = createWriter(basePath + filePath + ".progress");
-        if (this.progressFile == null)
-            Config.progressFileActive = false;
-        this.traceFile = createWriter(basePath + filePath + ".trace");
-        if (this.traceFile == null)
-            Config.traceFileActive = false;
-        this.masterLog = createWriter(basePath + "Typoceros.log");
-        if (this.masterLog == null)
-            Config.masterLogActive = false;
-        this.masterStackTrace = createWriter(basePath + "Typoceros.stack.trace");
-        if (this.masterStackTrace == null)
-            Config.masterStackTrace = false;
-        Config.sync();
-    }
+	public void log(Object message) {
+		if (Config.logFileActive)
+			_log(message.toString(), logFile);
+	}
 
+	public void debug(Object message) {
+		if (Config.debugFileActive)
+			_log(message.toString(), debugFile);
+	}
 
-    public void _log(String message, FileWriter f) {
-        _log(message, f, "\n");
-    }
+	public void info(Object message) {
+		if (Config.infoFileActive)
+			_log(message.toString(), infoFile);
+	}
 
-    public void _log(String message, FileWriter f, String end) {
-        List<String> calls = Arrays.stream((new Exception()).getStackTrace())
-                .filter(stackTraceElement -> !stackTraceElement.getClassName().equals("Logger")).limit(5).map(x ->
-                        String.format("%s.%s", x.getClassName(), x.getMethodName())
-                ).collect(Collectors.toList());
-        Collections.reverse(calls);
-        String stack = String.join("\t->\t", calls);
+	public void error(Object message) {
+		_log(message.toString(), errorFile);
+	}
 
-        try {
-            f.write(message + end);
-            if (Config.masterLogActive)
-                masterLog.write(message + end);
-            if (Config.masterStackTrace)
-                masterStackTrace.write(stack + end);
-        } catch (IOException e) {
-            System.out.println("An error occurred while writing to the log file: " + e.getMessage());
-        }
-    }
+	public void error(Object message, Throwable exp) {
+		_log(message.toString(), errorFile);
+		_log(exp.getMessage(), errorFile);
+		for (var ste : exp.getStackTrace()) {
+			_log(ste.toString(), errorFile);
+		}
+	}
 
-    public void log(Object message) {
-        if (Config.logFileActive)
-            _log(message.toString(), logFile);
-    }
+	public void trace(Object message) {
+		if (Config.traceFileActive)
+			_log(message.toString(), traceFile);
+	}
 
-    public void debug(Object message) {
-        if (Config.debugFileActive)
-            _log(message.toString(), debugFile);
-    }
+	public void progress(Object message) {
+		if (Config.progressFileActive)
+			_log(message.toString(), progressFile);
+	}
 
-    public void info(Object message) {
-        if (Config.infoFileActive)
-            _log(message.toString(), infoFile);
-    }
+	public void trace_info(Object message) {
+		trace(message);
+		info(message);
+	}
 
-    public void error(Object message) {
-        _log(message.toString(), errorFile);
-    }
+	public void trace(String name, Object value) {
+		trace(name + "=" + value.toString());
+	}
 
-    public void error(Object message, Throwable exp) {
-        _log(message.toString(), errorFile);
-        _log(exp.getMessage(), errorFile);
-        for (var ste : exp.getStackTrace()) {
-            _log(ste.toString(), errorFile);
-        }
-    }
+	public void traceSeparatorStart() {
+		trace("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+	}
 
-    public void trace(Object message) {
-        if (Config.traceFileActive)
-            _log(message.toString(), traceFile);
-    }
+	public void traceSeparatorEnd() {
+		trace("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+	}
 
-    public void progress(Object message) {
-        if (Config.progressFileActive)
-            _log(message.toString(), progressFile);
-    }
+	public void debugSeparatorStart() {
+		debug("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
+	}
 
-    public void trace_info(Object message) {
-        trace(message);
-        info(message);
-    }
+	public void debugSeparatorEnd() {
+		debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
+	}
 
-    public void trace(String name, Object value) {
-        trace(name + "=" + value.toString());
-    }
+	public void trace_progress(String message) {
+		trace(message);
+		progress(message);
+	}
 
-    public void traceSeparatorStart() {
-        trace("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
-    }
-
-    public void traceSeparatorEnd() {
-        trace("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-    }
-
-    public void debugSeparatorStart() {
-        debug("vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv");
-    }
-
-    public void debugSeparatorEnd() {
-        debug("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-    }
-
-    public void trace_progress(String message) {
-        trace(message);
-        progress(message);
-    }
+	public Logger setSkipMain(boolean value) {
+		this.skipMain = value;
+		return this;
+	}
 
 }

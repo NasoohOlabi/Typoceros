@@ -268,10 +268,6 @@ public class Typo {
         return String.join("", res);
     }
 
-    public void learn(String text) throws IOException {
-        LangProxy.normalize(text, span_size, true);
-    }
-
     public static int getSpanSize() {
         return Typo.span_size;
     }

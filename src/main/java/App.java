@@ -1,4 +1,3 @@
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,8 +23,6 @@ public class App {
                 Config.sync();
                 if (command.equalsIgnoreCase("spell")) {
                     System.out.println(LangProxy.normalize(string, Config.span_size));
-                } else if (command.equalsIgnoreCase("learn")) {
-                    LangProxy.normalize(string, Config.span_size, true);
                 } else if (command.equalsIgnoreCase("encode")) {
                     bytes = scanner.nextLine();
                     typo = getTypo(string);
