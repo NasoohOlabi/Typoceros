@@ -14,11 +14,12 @@ public class Logger {
     private final FileWriter errorFile;
     private final FileWriter progressFile;
     private final FileWriter traceFile;
-    private final FileWriter masterLog;
-    private final FileWriter masterStackTrace;
-    private final String basePath = "./Typoceros/logs/";
+    private static FileWriter masterLog;
+    private static FileWriter masterStackTrace;
+    private static final String basePath = "./Typoceros/logs/";
 
     private static final HashMap<String, Logger> _loggers = new HashMap<>();
+    private boolean skipMain = false;
 
     public static Logger named(String name) {
         var logger = new Logger(name);
@@ -70,6 +71,19 @@ public class Logger {
         return writer;
     }
 
+    private static boolean mastersCreated = false;
+
+    private static void createMasters() {
+        if (!mastersCreated) {
+            masterLog = createWriter(basePath + "Typoceros.log");
+            if (masterLog == null)
+                Config.masterLogActive = false;
+            masterStackTrace = createWriter(basePath + "Typoceros.stack.trace");
+            if (masterStackTrace == null)
+                Config.masterStackTrace = false;
+        }
+    }
+
     private Logger(String filePath) {
         this.logFile = createWriter(basePath + filePath + ".log");
         if (this.logFile == null)
@@ -89,15 +103,9 @@ public class Logger {
         this.traceFile = createWriter(basePath + filePath + ".trace");
         if (this.traceFile == null)
             Config.traceFileActive = false;
-        this.masterLog = createWriter(basePath + "Typoceros.log");
-        if (this.masterLog == null)
-            Config.masterLogActive = false;
-        this.masterStackTrace = createWriter(basePath + "Typoceros.stack.trace");
-        if (this.masterStackTrace == null)
-            Config.masterStackTrace = false;
+        createMasters();
         Config.sync();
     }
-
 
     public void _log(String message, FileWriter f) {
         _log(message, f, "\n");
@@ -113,12 +121,12 @@ public class Logger {
 
         try {
             f.write(message + end);
-            if (Config.masterLogActive)
+            if (Config.masterLogActive && !skipMain)
                 masterLog.write(message + end);
             if (Config.masterStackTrace)
                 masterStackTrace.write(stack + end);
-        } catch (IOException e) {
-            System.out.println("An error occurred while writing to the log file: " + e.getMessage());
+
+        } catch (IOException ignored) { // don't fail on logging
         }
     }
 
@@ -189,4 +197,7 @@ public class Logger {
         progress(message);
     }
 
+    public void setSkipMain(boolean b) {
+        this.skipMain = b;
+    }
 }
