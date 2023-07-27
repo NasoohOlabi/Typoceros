@@ -15,7 +15,6 @@ public class Logger {
     private final FileWriter progressFile;
     private final FileWriter traceFile;
     private static FileWriter masterLog;
-    private static FileWriter masterStackTrace;
     private static final String basePath = "./Typoceros/logs/";
 
     private static final HashMap<String, Logger> _loggers = new HashMap<>();
@@ -49,8 +48,6 @@ public class Logger {
             traceFile.close();
         if (masterLog != null)
             masterLog.close();
-        if (masterStackTrace != null)
-            masterStackTrace.close();
     }
 
     private static FileWriter createWriter(String path) {
@@ -78,9 +75,7 @@ public class Logger {
             masterLog = createWriter(basePath + "Typoceros.log");
             if (masterLog == null)
                 Config.masterLogActive = false;
-            masterStackTrace = createWriter(basePath + "Typoceros.stack.trace");
-            if (masterStackTrace == null)
-                Config.masterStackTrace = false;
+            mastersCreated = true;
         }
     }
 
@@ -112,20 +107,10 @@ public class Logger {
     }
 
     public void _log(String message, FileWriter f, String end) {
-        List<String> calls = Arrays.stream((new Exception()).getStackTrace())
-                .filter(stackTraceElement -> !stackTraceElement.getClassName().equals("Logger")).limit(5).map(x ->
-                        String.format("%s.%s", x.getClassName(), x.getMethodName())
-                ).collect(Collectors.toList());
-        Collections.reverse(calls);
-        String stack = String.join("\t->\t", calls);
-
         try {
             f.write(message + end);
             if (Config.masterLogActive && !skipMain)
                 masterLog.write(message + end);
-            if (Config.masterStackTrace)
-                masterStackTrace.write(stack + end);
-
         } catch (IOException ignored) { // don't fail on logging
         }
     }

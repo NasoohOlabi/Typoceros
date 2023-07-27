@@ -16,7 +16,6 @@ public class Config {
     public static boolean progressFileActive = false;
     public static boolean traceFileActive = false;
     public static boolean masterLogActive = false;
-    public static boolean masterStackTrace = false;
     public static double min_winning_percentage = 0.5;
     public static int max_population = 23;
 
@@ -40,7 +39,6 @@ public class Config {
                 writer.write("progressFileActive=" + progressFileActive + "\n");
                 writer.write("traceFileActive=" + traceFileActive + "\n");
                 writer.write("masterLogActive=" + masterLogActive + "\n");
-                writer.write("masterStackTrace=" + masterStackTrace + "\n");
                 writer.write("min_winning_percentage=" + min_winning_percentage + "\n");
                 writer.write("max_population=" + max_population + "\n");
                 writer.close();
@@ -72,8 +70,6 @@ public class Config {
                         traceFileActive = "true".equals(value);
                     } else if ("masterLogActive".equals(key)) {
                         masterLogActive = "true".equals(value);
-                    } else if ("masterStackTrace".equals(key)) {
-                        masterStackTrace = "true".equals(value);
                     } else if ("min_winning_percentage".equals(key)) {
                         min_winning_percentage = Double.parseDouble(value);
                     } else if ("max_population".equals(key)) {
