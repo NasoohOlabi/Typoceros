@@ -109,53 +109,73 @@ public class LangProxy {
 		_logger.trace(String.format("word_correction(word: %s, text: %s)", word, text));
 		var typo = word.in(text);
 		_logger.trace("typo", typo);
-		List<String> votes = new ArrayList<>();
+		List<String> ruleBasedCorrection = new ArrayList<>();
 		for (var rule : Rules.FAT_CORRECTION_RULES) {
 			Matcher matcher = rule._1().matcher(typo);
 			while (matcher.find()) {
 				var span = Span.of(matcher.start(), matcher.end());
-				votes.add(applyMatch(typo, rule, span));
+				ruleBasedCorrection.add(applyMatch(typo, rule, span));
 			}
 		}
 		for (var rule : Rules.WORD_CORRECTION_RULES) {
 			Matcher matcher = rule._1().matcher(typo);
 			if (matcher.find()) {
-				votes.add(matcher.replaceAll(rule._2));
+				ruleBasedCorrection.add(matcher.replaceAll(rule._2));
 			}
 		}
 		for (var rule : Rules.KEYBOARD_CORRECTION_RULES) {
 			Matcher matcher = rule._1().matcher(typo);
 			while (matcher.find()) {
 				var span = Span.of(matcher.start(), matcher.end());
-				votes.add(applyMatch(typo, rule, span));
+				ruleBasedCorrection.add(applyMatch(typo, rule, span));
 			}
 		}
 		var alphabet = "abcdefghijklmnopqrstuvwxyz".toCharArray();
 		for (var c : alphabet) {
 			for (int i = 1; i < typo.length(); i++) {
-				votes.add(insertCharAtIndex(typo, c, i));
+				ruleBasedCorrection.add(insertCharAtIndex(typo, c, i));
 			}
 		}
 
-		_logger.trace("unfiltered votes: ", votes);
-		var election = new Election(votes.size(), typo);
-		Collections.shuffle(votes);
-		for (int i = 0; i < votes.size(); i++) {
-			var replacement_updatedString = word.swapAndUpdate(text, votes.get(i));
+		_logger.trace("unfiltered votes: ", ruleBasedCorrection);
+		var election = new Election(ruleBasedCorrection.size(), typo);
+		// Collections.shuffle(ruleBasedCorrection);// DON'T DO ANYTHING RANDOM IF YOU
+		// AREN'T USING
+		// THE WHOLE LIST IDIOT!
+		/**
+		 * so lets explain what's going on I have a costly operation which is checking
+		 * every
+		 * ruleBasedCorrection if it's a valid word and if it's not taking the suggested
+		 * fix to
+		 * be a vote! ok
+		 * if a word is long enough ruleBasedCorrection would be more 40 element
+		 * which is definitely a foot gun in terms of performance
+		 * I'll limit the votes - not checks!! - to 13 ~ Config.max_population
+		 * but I can't take the same order so I have to sample
+		 * doing it randomly is nothing but a headache... or I'm not sure.
+		 * I could use an interval based mask 🤔
+		 * OK I'm sorry since I
+		 */
+		Collections.shuffle(ruleBasedCorrection);
+		for (int i = 0; i < ruleBasedCorrection.size(); i++) {
+			var replacement_updatedString = word.swapAndUpdate(text, ruleBasedCorrection.get(i));
 			var replacement = replacement_updatedString._1;
 			var updatedString = replacement_updatedString._2;
 			var unimportant_suggestions = ThinLangApi.suggestionsForWord(replacement, updatedString);
-			if (unimportant_suggestions.isPresent())
-				for (var unimportant_suggestion : unimportant_suggestions.get()) {
-					if (votes.contains(unimportant_suggestion)) {
-						election.addVote(unimportant_suggestion);
-						if (election.getCurrentVotes() > Config.max_population
-								&& election.getWinner().isPresent()) {
-							// exit outer loop
-							i = votes.size();
-						}
-					}
-				}
+			if (unimportant_suggestions.isEmpty())
+				continue;
+
+			List<String> candidates = unimportant_suggestions.get()
+					.stream()
+					.filter(x -> ruleBasedCorrection.contains(x))
+					.collect(Collectors.toList());
+
+			election.addBallet(candidates);
+			// just stop
+			if (election.getCurrentVotes() > Config.max_population)
+				break;
+			else
+				_logger.trace("election.getCurrentVotes()", election.getCurrentVotes());
 		}
 		_logger.trace(election.report());
 		var winner = election.getWinner();

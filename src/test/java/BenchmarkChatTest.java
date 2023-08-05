@@ -55,9 +55,18 @@ public class BenchmarkChatTest {
 			var chatId = chatId_ex._1;
 			var ex = chatId_ex._2;
 			try {
+				var startTime = new java.util.Date().getTime();
 				var bits = tt.testString(ex, TypoTest.generateRandomBitStream(ex.length(), 0), true);
-				try (var fw = new FileWriter(new File("benchmarks.tsv"), true)) {
-					fw.write(String.format("%s\t%d\t%d\t%d\n", chatId, ex.length(), bits, (bits * 100) / ex.length()));
+				var endTime = new java.util.Date().getTime();
+				long durationMillis = endTime - startTime;
+				int durationSecs = (int) (durationMillis / 1000);
+				int mins = durationSecs / 60;
+				int secs = durationSecs % 60;
+
+				try (var fw = new FileWriter(new File("benchmarks2.0.tsv"), true)) {
+					fw.write(
+							String.format("%s\t%d\t%d\t%d\t%d:%02d\n", chatId, ex.length(), bits, (bits * 100) / ex.length(), mins,
+									secs));
 				} catch (Exception e) {
 					// TODO: handle exception
 				}

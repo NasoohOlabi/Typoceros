@@ -8,7 +8,7 @@ public class Config {
     public static String config_file = "./Typoceros/config/config.env";
     public static String logging_file = "./Typoceros/config/logging.env";
     public static String dict_file = "./Typoceros/config/dictionary";
-    public static int span_size = 10;
+    public static int span_size = 7;
     public static boolean logFileActive = false;
     public static boolean infoFileActive = false;
     public static boolean debugFileActive = false;
@@ -16,8 +16,11 @@ public class Config {
     public static boolean progressFileActive = false;
     public static boolean traceFileActive = false;
     public static boolean masterLogActive = false;
-    public static double min_winning_percentage = 0.5;
-    public static int max_population = 23;
+    /**
+     * this means that the winner should be .25 points ahead of the rest!
+     */
+    public static double min_winning_percentage = 0.25;
+    public static int max_population = 13;
 
     private final static Logger _logger = Logger.named("Config");
 
