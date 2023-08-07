@@ -1,6 +1,7 @@
+
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
 public class App {
@@ -16,8 +17,8 @@ public class App {
         String string;
         String bytes;
         Typo typo;
-        System.setProperty("file.encoding", "UTF-8");
-        try (Scanner scanner = new Scanner(System.in)) {
+        System.setOut(new PrintStream(System.out, true, "UTF-8"));
+        try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8.name())) {
             while (true) {
                 command = scanner.nextLine();
                 string = scanner.nextLine();
