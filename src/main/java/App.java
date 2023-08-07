@@ -2,6 +2,7 @@
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Scanner;
 
 public class App {
@@ -21,21 +22,21 @@ public class App {
         try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8.name())) {
             while (true) {
                 command = scanner.nextLine();
-                string = scanner.nextLine();
+                string = from64(scanner.nextLine());
                 Config.sync();
-                if (command.equalsIgnoreCase("spell")) {
-                    System.out.println(LangProxy.normalize(string, Config.span_size));
-                } else if (command.equalsIgnoreCase("encode")) {
+                if (command.equalsIgnoreCase("encode")) {
                     bytes = scanner.nextLine();
                     typo = getTypo(string);
                     var encoded_rem = typo.encode(bytes);
-                    System.out.println(encoded_rem._1());
+                    System.out.println(to64(encoded_rem._1()));
                     System.out.println(encoded_rem._2);
                 } else if (command.equalsIgnoreCase("decode")) {
                     var originalText_values_bits = Typo.decode(string, null);
                     var originalText = originalText_values_bits._1();
-                    System.out.println(originalText);
+                    System.out.println(to64(originalText));
                     System.out.println(originalText_values_bits._3());
+                } else if (command.equalsIgnoreCase("echo")) {
+                    System.out.println(to64(string));
                 }
                 // Config.flushLogs();
             }
@@ -44,5 +45,16 @@ public class App {
         } finally {
             Logger.closeAll();
         }
+    }
+
+    public static String to64(String s) {
+        byte[] bytes = s.getBytes(StandardCharsets.UTF_8);
+        byte[] encodedBytes = Base64.getEncoder().encode(bytes);
+        return new String(encodedBytes, StandardCharsets.UTF_8);
+    }
+
+    public static String from64(String s) {
+        byte[] decodedBytes = Base64.getDecoder().decode(s.getBytes(StandardCharsets.UTF_8));
+        return new String(decodedBytes, StandardCharsets.UTF_8);
     }
 }
