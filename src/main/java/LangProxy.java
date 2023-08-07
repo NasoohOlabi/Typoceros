@@ -257,27 +257,13 @@ public class LangProxy {
 
 			String new_word = newWordSpan.in(newText);
 
-			Optional<String> new_word_correction_mode_opt = Optional.empty();
-			try {
-				new_word_correction_mode_opt = word_correction(
-						newWordSpan,
-						newText);
-			} catch (IOException e) {
-				_logger.error("unlikely. just retry shit hit the fan once", e);
-			}
-
-			if (new_word_correction_mode_opt.isEmpty()) {
-				return;
-			}
-			String new_word_correction_mode = new_word_correction_mode_opt.get();
 			if (sameStartAndEnd(old_word, new_word)
-					&& new_word_correction_mode.equals(old_word)
 					&& !old_word.equals(new_word)) {
 				mutations.set(match_index, newText);
 			} else {
 				mutations_fail_reason.set(match_index,
 						"rule undetectable or modify looks! new word \"" + new_word + "\" != \""
-								+ old_word + "\" original and will be corrected to " + new_word_correction_mode);
+								+ old_word + "\" original");
 			}
 
 			int i = match_index;
