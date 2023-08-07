@@ -233,9 +233,12 @@ public class LangProxy {
 		StringSpans texas = new StringSpans(text);
 		List<String> mutations = new ArrayList<>(Collections.nCopies(slots.size(), ""));
 		List<String> mutations_fail_reason = new ArrayList<>(Collections.nCopies(slots.size(), ""));
-		for (int match_index = 0; match_index < slots.size(); match_index++) {
+
+		List<Integer> ambiguous_invalid_matches = new ArrayList<>();
+
+		slots.parallelStream().forEach(match_result -> {
+			var match_index = slots.indexOf(match_result);
 			_logger.trace_progress(String.format("checking slot %d/%d", match_index, slots.size()));
-			var match_result = slots.get(match_index);
 			var span = match_result.sourceSpan;
 			var newText = match_result.after;
 			var newTexas = new StringSpans(newText);
@@ -254,12 +257,17 @@ public class LangProxy {
 
 			String new_word = newWordSpan.in(newText);
 
-			var new_word_correction_mode_opt = word_correction(
-					newWordSpan,
-					newText);
+			Optional<String> new_word_correction_mode_opt = Optional.empty();
+			try {
+				new_word_correction_mode_opt = word_correction(
+						newWordSpan,
+						newText);
+			} catch (IOException e) {
+				_logger.error("unlikely. just retry shit hit the fan once", e);
+			}
 
 			if (new_word_correction_mode_opt.isEmpty()) {
-				continue;
+				return;
 			}
 			String new_word_correction_mode = new_word_correction_mode_opt.get();
 			if (sameStartAndEnd(old_word, new_word)
@@ -271,9 +279,8 @@ public class LangProxy {
 						"rule undetectable or modify looks! new word \"" + new_word + "\" != \""
 								+ old_word + "\" original and will be corrected to " + new_word_correction_mode);
 			}
-		}
-		List<Integer> ambiguous_invalid_matches = new ArrayList<>();
-		for (int i = 0; i < mutations.size(); i++) {
+
+			int i = match_index;
 			String new_string = mutations.get(i);
 
 			if (new_string.isEmpty()) {
@@ -284,16 +291,20 @@ public class LangProxy {
 						"previous slot yields the same typo");
 				ambiguous_invalid_matches.add(i);
 			} else {
-				var normalized = normalize(new_string, span_size);
+				String normalized = "";
+				try {
+					normalized = normalize(new_string, span_size);
+				} catch (IOException e) {
+					_logger.error("unlikely. just retry shit hit the fan once", e);
+				}
 				if (!normalized.equals(text)) {
 					_logger.debug("mutation '" + new_string + "' is ambiguous because " +
 							"It normalizes to '" + normalized + "' while it should normalize to '" + text + "'");
 					ambiguous_invalid_matches.add(i);
-
 				}
 
 			}
-		}
+		});
 
 		_logger.debug("ambiguous_invalid_matches=" + ambiguous_invalid_matches);
 		List<TypoMatch> valid_slots = new ArrayList<>();
