@@ -16,6 +16,7 @@ public class App {
         String string;
         String bytes;
         Typo typo;
+        System.setProperty("file.encoding", "UTF-8");
         try (Scanner scanner = new Scanner(System.in)) {
             while (true) {
                 command = scanner.nextLine();
