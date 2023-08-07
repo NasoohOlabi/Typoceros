@@ -51,6 +51,7 @@ public class TypoTest {
             "hi, how are you?",
             " Yep, she actually makes $1123,000 per episode! Crazy huh? ",
             "I sure do. You can listen to Jupiter's storms on AM radio",
+            "I agree. Only the lichens and cyanobateria would be able to thrive on Mars anyway.",
             // "Hey, How are you? Did you see the last John Cena movie?", "Hi, How are
             // you?",
             // "However, you may as well just use a function statement instead; the only
