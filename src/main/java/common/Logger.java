@@ -61,7 +61,7 @@ public class Logger {
                 return null;
             }
         }
-        FileWriter writer = null;
+        FileWriter writer;
         try {
             writer = new FileWriter(f, true);
         } catch (IOException e) {

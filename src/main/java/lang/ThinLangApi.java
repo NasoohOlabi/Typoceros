@@ -1,5 +1,12 @@
 package lang;
 
+import common.Logger;
+import common.Span;
+import common.util;
+import org.languagetool.JLanguageTool;
+import org.languagetool.language.AmericanEnglish;
+import org.languagetool.rules.RuleMatch;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,34 +14,18 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import common.Logger;
-import common.Span;
-import common.util;
-import lang.LangProxy;
-import org.languagetool.JLanguageTool;
-import org.languagetool.language.AmericanEnglish;
-import org.languagetool.rules.RuleMatch;
-
 public class ThinLangApi {
     private static final JLanguageTool langTool = new JLanguageTool(new AmericanEnglish());
     private final static Logger _logger = Logger.named("ThinLangApi");
 
-    public static boolean isNormalWord(String word) throws IOException {
-        List<RuleMatch> matches = correction_rules_subset(word);
-        return matches.isEmpty();
-    }
-
     public static List<RuleMatch> check(String text) throws IOException {
-        // common.Timer.startTimer("ThinLangApi.check");
-        var result = langTool.check(text);
-        // common.Timer.prettyPrint("ThinLangApi.check", _logger);
-        return result;
+        return langTool.check(text);
     }
 
     public static String rule2String(RuleMatch rule) {
         return String.format(
-                "Rule{span=%s, type=%s, replacements=%s, message=%s}", Span.fromRule(rule).toString(),
-                rule.getRule().getCategory().getId().toString(), rule.getSuggestedReplacements().toString(),
+                "Rule{span=%s, type=%s, replacements=%s, message=%s}", Span.fromRule(rule),
+                rule.getRule().getCategory().getId(), rule.getSuggestedReplacements().toString(),
                 rule.getMessage());
     }
 
@@ -105,11 +96,6 @@ public class ThinLangApi {
         return List.of();
     }
 
-    public static boolean normal_word(String word) throws IOException {
-        List<RuleMatch> result = correction_rules_subset(word);
-        return result.size() == 0;
-    }
-
     public static List<String> filterIntentionalTypos(
             String typo,
             List<String> libSuggestions) {
@@ -136,11 +122,10 @@ public class ThinLangApi {
     }
 
     public static boolean intentionalTypo(String word, String typo) {
-        var v = util.stringMutationDistance(word, typo) <= INTENTIONAL_TYPO_STR_DIST
+        return util.stringMutationDistance(word, typo) <= INTENTIONAL_TYPO_STR_DIST
                 && upperDistanceEqualsLowerDistance(word, typo)
                 && !word.contains(" ")
                 && LangProxy.sameStartAndEnd(word, typo)
                 && !typo.contains(" ");
-        return v;
     }
 }
