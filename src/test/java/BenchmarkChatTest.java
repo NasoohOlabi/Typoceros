@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import common.Config;
+import common.Logger;
+import common.util;
+import lang.Rules;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,7 +55,7 @@ public class BenchmarkChatTest {
 	@Test
 	public void testTexts() {
 		var tt = new TypoTest();
-		chats().dropWhile(x -> Integer.parseInt(x._1) < 100).forEach(chatId_ex -> {
+		chats().dropWhile(x -> Integer.parseInt(x._1) < 25).forEach(chatId_ex -> {
 			var chatId = chatId_ex._1;
 			var ex = chatId_ex._2;
 			try {
@@ -63,7 +67,7 @@ public class BenchmarkChatTest {
 				int mins = durationSecs / 60;
 				int secs = durationSecs % 60;
 
-				try (var fw = new FileWriter(new File("benchmarks2.0.tsv"), true)) {
+				try (var fw = new FileWriter(new File("benchmarks2.0-span" + Config.span_size + ".tsv"), true)) {
 					fw.write(
 							String.format("%s\t%d\t%d\t%d\t%d:%02d\n", chatId, ex.length(), bits, (bits * 100) / ex.length(), mins,
 									secs));

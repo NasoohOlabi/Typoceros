@@ -1,4 +1,7 @@
 
+import common.Config;
+import common.Logger;
+
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
@@ -38,7 +41,7 @@ public class App {
                 } else if (command.equalsIgnoreCase("echo")) {
                     System.out.println(to64(string));
                 }
-                // Config.flushLogs();
+                // common.Config.flushLogs();
             }
         } catch (IllegalArgumentException | IOException | ValueError e) {
             _logger.error("App in main ", e);

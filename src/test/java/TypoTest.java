@@ -11,6 +11,12 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 //
+import common.Config;
+import common.Logger;
+import common.StringSpans;
+import common.Timer;
+import lang.LangProxy;
+import lang.ThinLangApi;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -190,7 +196,7 @@ public class TypoTest {
     @Test
     public void testNormalize() throws IOException {
         _logger.info("Test started");
-        // assertEquals(examples[1], LangProxy.normalize(examples[1], 10, true));
+        // assertEquals(examples[1], lang.LangProxy.normalize(examples[1], 10, true));
         for (var ex : examples) {
             assertEquals(ex, LangProxy.normalize(ex, 10));
         }

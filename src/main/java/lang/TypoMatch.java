@@ -1,7 +1,12 @@
+package lang;
+
+import common.Span;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Objects;
 import java.util.function.Function;
 
-public class TypoMatch {
+public class TypoMatch implements Comparable<TypoMatch> {
     public final String text;
     public final String after;
     public final Span sourceSpan;
@@ -27,10 +32,10 @@ public class TypoMatch {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof TypoMatch))
+        if (!(o instanceof TypoMatch typoMatch))
             return false;
 
-        TypoMatch typoMatch = (TypoMatch) o; // Cast o to TypoMatch type
+        // Cast o to lang.TypoMatch type
 
         return after.equals(typoMatch.after) && sourceSpan.equals(typoMatch.sourceSpan);
     }
@@ -38,5 +43,10 @@ public class TypoMatch {
     @Override
     public int hashCode() {
         return Objects.hash(after, sourceSpan);
+    }
+
+    @Override
+    public int compareTo(@NotNull TypoMatch o) {
+        return this.sourceSpan.compareTo(o.sourceSpan);
     }
 }

@@ -1,3 +1,5 @@
+package lang;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,8 +9,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import common.*;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import lang.Rules;
 
 public class LangProxy {
 
@@ -104,27 +108,27 @@ public class LangProxy {
 	}
 
 	public static Optional<String> word_correction(Span word,
-			String text) throws IOException {
+												   String text) throws IOException {
 		Timer.startTimer("LangProxy.word_correction");
 		_logger.trace(String.format("word_correction(word: %s, text: %s)", word, text));
 		var typo = word.in(text);
 		_logger.trace("typo", typo);
 		List<String> ruleBasedCorrection = new ArrayList<>();
 		for (var rule : Rules.FAT_CORRECTION_RULES) {
-			Matcher matcher = rule._1().matcher(typo);
+			Matcher matcher = rule.regex.matcher(typo);
 			while (matcher.find()) {
 				var span = Span.of(matcher.start(), matcher.end());
 				ruleBasedCorrection.add(applyMatch(typo, rule, span));
 			}
 		}
 		for (var rule : Rules.WORD_CORRECTION_RULES) {
-			Matcher matcher = rule._1().matcher(typo);
+			Matcher matcher = rule.regex.matcher(typo);
 			if (matcher.find()) {
-				ruleBasedCorrection.add(matcher.replaceAll(rule._2));
+				ruleBasedCorrection.add(matcher.replaceAll(rule.repl));
 			}
 		}
 		for (var rule : Rules.KEYBOARD_CORRECTION_RULES) {
-			Matcher matcher = rule._1().matcher(typo);
+			Matcher matcher = rule.regex.matcher(typo);
 			while (matcher.find()) {
 				var span = Span.of(matcher.start(), matcher.end());
 				ruleBasedCorrection.add(applyMatch(typo, rule, span));
@@ -150,7 +154,7 @@ public class LangProxy {
 		 * be a vote! ok
 		 * if a word is long enough ruleBasedCorrection would be more 40 element
 		 * which is definitely a foot gun in terms of performance
-		 * I'll limit the votes - not checks!! - to 13 ~ Config.max_population
+		 * I'll limit the votes - not checks!! - to 13 ~ common.Config.max_population
 		 * but I can't take the same order so I have to sample
 		 * doing it randomly is nothing but a headache... or I'm not sure.
 		 * I could use an interval based mask 🤔
@@ -167,7 +171,7 @@ public class LangProxy {
 
 			List<String> candidates = unimportant_suggestions.get()
 					.stream()
-					.filter(x -> ruleBasedCorrection.contains(x))
+					.filter(ruleBasedCorrection::contains)
 					.collect(Collectors.toList());
 
 			election.addBallet(candidates);
@@ -203,7 +207,7 @@ public class LangProxy {
 
 			return span.swap(text, replaced_text);
 		} catch (Exception exp) {
-			_logger.debug("Exception in LangProxy.java:389 applyMatch");
+			_logger.debug("Exception in lang.LangProxy.java:389 applyMatch");
 			_logger.debug("text:(" + text + ")");
 			_logger.debug("repl:(" + repl + ")");
 			_logger.debug("regex:(" + regex + ")");
@@ -214,22 +218,13 @@ public class LangProxy {
 	}
 
 	public static String applyMatch(
-			String text, Tuple2<Pattern, String> rule, Span span) {
-		var repl = rule._2;
-		var regex = rule._1;
-		return applyMatch(text, repl, regex, span);
+			String text, Rule rule, Span span) {
+		return applyMatch(text, rule.repl, rule.regex, span);
 	}
 
-	public static String applyMatch(
-			String text, Tuple3<Span, String, Pattern> rule) {
-		var repl = rule._2;
-		var regex = rule._3;
-		var span = rule._1;
-		return applyMatch(text, repl, regex, span);
-	}
 
 	public static List<TypoMatch> valid_matches(String text,
-			List<TypoMatch> slots, int span_size) throws IOException {
+												List<TypoMatch> slots, int span_size) throws IOException {
 		StringSpans texas = new StringSpans(text);
 		List<String> mutations = new ArrayList<>(Collections.nCopies(slots.size(), ""));
 		List<String> mutations_fail_reason = new ArrayList<>(Collections.nCopies(slots.size(), ""));
@@ -320,7 +315,7 @@ public class LangProxy {
 						.toLowerCase(old_word.charAt(old_word.length() - 1)));
 	}
 
-	static List<TypoMatch> valid_rules_scan(String text, int span_size) throws IOException {
+	public static List<TypoMatch> valid_rules_scan(String text, int span_size) throws IOException {
 		_logger.info("scanning for rules");
 		List<TypoMatch> proposed_slots = Rules.rules_scan(text);
 		_logger.info("done scanning for rules");

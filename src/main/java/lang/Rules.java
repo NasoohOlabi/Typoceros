@@ -1,3 +1,5 @@
+package lang;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -9,6 +11,7 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import common.Span;
 import io.vavr.Tuple2;
 
 public class Rules {
@@ -27,16 +30,16 @@ public class Rules {
                 .map(line -> new Tuple2<>(line[0], line[1]));
     }
 
-    static Tuple2<Pattern, String> compileFirst(Tuple2<String, String> x) {
+    static Rule compileFirst(Tuple2<String, String> x) {
         try {
-            return new Tuple2<>(Pattern.compile(x._1), x._2);
+            return Rule.of(Pattern.compile(x._1), x._2);
         } catch (PatternSyntaxException e) {
             System.err.println(x);
             throw new IllegalArgumentException("compilable " + x, e);
         }
     }
 
-    static List<Tuple2<Pattern, String>> WORD_CORRECTION_RULES = Stream.concat(
+    static List<Rule> WORD_CORRECTION_RULES = Stream.concat(
             parseRules("anti.variant"),
             Stream.concat(
                     parseRules("anti.misspelling"),
@@ -46,26 +49,26 @@ public class Rules {
     /**
      * these include the count rules and long shift rules
      */
-    static List<Tuple2<Pattern, String>> KEYBOARD_CORRECTION_RULES = parseRules("anti.keyboard")
+    static List<Rule> KEYBOARD_CORRECTION_RULES = parseRules("anti.keyboard")
             .map(Rules::compileFirst).collect(Collectors.toList());
     /**
      * these include only fat rules
      */
-    static List<Tuple2<Pattern, String>> FAT_CORRECTION_RULES = parseRules("fat.keyboard").map(Rules::compileFirst)
+    static List<Rule> FAT_CORRECTION_RULES = parseRules("fat.keyboard").map(Rules::compileFirst)
             .collect(Collectors.toList());
 
-    static List<Tuple2<Pattern, String>> WORD_RULES = Stream.concat(
+    static List<Rule> WORD_RULES = Stream.concat(
             parseRules("variant"),
             Stream.concat(parseRules("grammatical"), parseRules("misspelling"))).map(Rules::compileFirst)
             .collect(Collectors.toList());
 
-    static List<Tuple2<Pattern, String>> KEYBOARD_RULES = parseRules("keyboard").map(Rules::compileFirst)
+    static List<Rule> KEYBOARD_RULES = parseRules("keyboard").map(Rules::compileFirst)
             .collect(Collectors.toList());
 
     static List<TypoMatch> keyboard_rules_scan(String text) {
         List<TypoMatch> matches = new ArrayList<>();
         for (var rule : Rules.KEYBOARD_RULES) {
-            Pattern regex = rule._1;
+            Pattern regex = rule.regex;
             Matcher matcher = regex.matcher(text);
             while (matcher.find()) {
                 addHit(text, matches, rule, regex, matcher);
@@ -77,7 +80,7 @@ public class Rules {
     static List<TypoMatch> word_rules_scan(String text) {
         List<TypoMatch> matches = new ArrayList<>();
         for (var rule : Rules.WORD_RULES) {
-            Pattern regex = rule._1;
+            Pattern regex = rule.regex;
             Matcher matcher = regex.matcher(text);
             if (matcher.matches()) {
                 addHit(text, matches, rule, regex, matcher);
@@ -86,11 +89,11 @@ public class Rules {
         return matches;
     }
 
-    private static void addHit(String text, List<TypoMatch> matches, Tuple2<Pattern, String> rule, Pattern regex,
-            Matcher matcher) {
+    private static void addHit(String text, List<TypoMatch> matches, Rule rule, Pattern regex,
+                               Matcher matcher) {
         int start = matcher.start();
         int end = matcher.end();
-        String replacement = rule._2;
+        String replacement = rule.repl;
         var span = Span.of(start, end);
         var match = TypoMatch.of(text,
                 LangProxy.applyMatch(text, replacement, regex, span),
@@ -120,11 +123,7 @@ public class Rules {
         result.addAll(word_rules_scan(text));
         result.addAll(keyboard_rules_scan(text));
         result.addAll(missing_letter_scan(text));
-        result.sort((a, b) -> (a.sourceSpan.start -
-                b.sourceSpan.start != 0) ? a.sourceSpan.start -
-                        b.sourceSpan.start
-                        : a.sourceSpan.end -
-                                b.sourceSpan.end);
+        result.sort(TypoMatch::compareTo);
         return result;
     }
 }

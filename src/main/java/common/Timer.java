@@ -1,3 +1,5 @@
+package common;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,7 +26,7 @@ public class Timer {
     public static void prettyPrint(String methodName, Logger _logger) {
         Long elapsedTime = Timer.endTimer(methodName);
         _logger.setSkipMain(true);
-        _logger.debug(String.format("\t\tTimer took %3d ms for '%s' overall %d for %d calls averaging at %.2f per call",
+        _logger.debug(String.format("\t\tcommon.Timer took %3d ms for '%s' overall %d for %d calls averaging at %.2f per call",
                 elapsedTime, methodName, acc.get(methodName)._1, acc.get(methodName)._2,
                 (double) acc.get(methodName)._1 / acc.get(methodName)._2));
         _logger.setSkipMain(false);

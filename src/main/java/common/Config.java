@@ -1,8 +1,6 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+package common;
+
+import java.io.*;
 
 public class Config {
     public static String config_file = "./Typoceros/config/config.env";

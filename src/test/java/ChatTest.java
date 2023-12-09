@@ -4,6 +4,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import common.Config;
+import common.Logger;
+import common.util;
+import lang.ThinLangApi;
 import org.junit.Before;
 import org.junit.Test;
 

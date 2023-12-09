@@ -7,8 +7,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import common.Logger;
+import common.Span;
+import common.util;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
+import lang.LangProxy;
+import lang.TypoMatch;
 
 public class Typo {
     private final static Logger _logger = Logger.named("Typo");

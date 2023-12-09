@@ -1,7 +1,11 @@
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import common.Config;
+import common.Span;
+import common.util;
 import io.vavr.Tuple3;
+import lang.LocalRule;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,7 +43,7 @@ public class SpanTest {
     public void b() {
         String input = "example";
 
-        List<Tuple3<Span, String, Pattern>> matches = new ArrayList<>();
+        List<LocalRule> matches = new ArrayList<>();
 
         Pattern regex = Pattern.compile("(?<=[^\\W])[a-z](?=[^\\W])");
         Matcher matcher = regex.matcher(input);
@@ -47,14 +51,14 @@ public class SpanTest {
             int start = matcher.start();
             int end = matcher.end();
             String replacement = "";
-            matches.add(new Tuple3<>(Span.of(start - 1, end + 1), replacement, regex));
+            matches.add(LocalRule.of(Span.of(start - 1, end + 1), replacement, regex));
         }
 
         System.out.println(matches);
         matches.forEach(t -> {
-            var span = t._1();
-            var repl = t._2();
-            var re = t._3();
+            var span = t.span;
+            var repl = t.repl;
+            var re = t.regex;
             var hitSection = input.substring(span.start, span.end);
             System.out.println("hitSection=(" + hitSection + ")");
             System.out.println(input.substring(0, span.start)

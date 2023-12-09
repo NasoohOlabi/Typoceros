@@ -1,10 +1,13 @@
+package common;
+
 import java.util.Optional;
 import java.util.function.Function;
 
 import io.vavr.Tuple2;
+import org.jetbrains.annotations.NotNull;
 import org.languagetool.rules.RuleMatch;
 
-public class Span {
+public class Span implements Comparable<Span> {
     public final int start;
     public final int end;
 
@@ -83,5 +86,12 @@ public class Span {
     public Span union(Span other) {
         return Span.of(Math.min(this.getStart(), other.getStart()),
                 Math.max(this.getEnd(), other.getEnd()));
+    }
+
+    @Override
+    public int compareTo(@NotNull Span o) {
+        return (this.start - o.start != 0)
+                ? this.start - o.start
+                : this.end - o.end;
     }
 }

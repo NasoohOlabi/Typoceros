@@ -1,10 +1,12 @@
+package common;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 
 /**
- * A silent Logger
+ * A silent common.Logger
  * if stdout is being used.
  */
 public class Logger {

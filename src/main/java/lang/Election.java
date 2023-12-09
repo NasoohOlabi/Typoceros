@@ -1,3 +1,8 @@
+package lang;
+
+import common.Config;
+import common.Logger;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +19,7 @@ public class Election {
 	public Election(int population, String wordInQuestion) {
 		this.population = population;
 		this.wordInQuestion = wordInQuestion;
-		_logger.trace("#".repeat(25) + " new Election: " + wordInQuestion + " " + "#".repeat(25));
+		_logger.trace("#".repeat(25) + " new lang.Election: " + wordInQuestion + " " + "#".repeat(25));
 	}
 
 	private void addVote(String word, Double weight) {
@@ -73,7 +78,7 @@ public class Election {
 				String.format(
 						"clearWinner: " +
 								"firstCandidatePercentage: %f - secondCandidatePercentage: %f" +
-								" > (Config.min_winning_percentage / 2): %f = %b",
+								" > (common.Config.min_winning_percentage / 2): %f = %b",
 						firstCandidatePercentage, secondCandidatePercentage, (Config.min_winning_percentage),
 						firstCandidatePercentage - secondCandidatePercentage > (Config.min_winning_percentage)));
 		return firstCandidatePercentage - secondCandidatePercentage > (Config.min_winning_percentage);

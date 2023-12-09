@@ -1,3 +1,5 @@
+package lang;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -5,6 +7,10 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import common.Logger;
+import common.Span;
+import common.util;
+import lang.LangProxy;
 import org.languagetool.JLanguageTool;
 import org.languagetool.language.AmericanEnglish;
 import org.languagetool.rules.RuleMatch;
@@ -19,9 +25,9 @@ public class ThinLangApi {
     }
 
     public static List<RuleMatch> check(String text) throws IOException {
-        // Timer.startTimer("ThinLangApi.check");
+        // common.Timer.startTimer("ThinLangApi.check");
         var result = langTool.check(text);
-        // Timer.prettyPrint("ThinLangApi.check", _logger);
+        // common.Timer.prettyPrint("ThinLangApi.check", _logger);
         return result;
     }
 

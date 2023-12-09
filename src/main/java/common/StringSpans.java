@@ -1,3 +1,5 @@
+package common;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -9,7 +11,7 @@ import java.util.stream.Stream;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 
-class StringSpans {
+public class StringSpans {
     private String string;
     private List<Span> words;
     private List<Span> spans;
