@@ -1,3 +1,5 @@
+package api;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,21 +11,18 @@ import java.util.stream.Collectors;
 
 import common.Buckets;
 import common.Logger;
-import common.Span;
 import common.util;
-import io.vavr.Tuple2;
-import io.vavr.Tuple3;
 import lang.LangProxy;
 import lang.TypoMatch;
 
 public class Typo {
-    private final static Logger _logger = Logger.named("Typo");
+    private final static Logger _logger = Logger.named("api.Typo");
     private final String text;
     private Buckets<TypoMatch> buckets;
     private static int span_size = 10;
 
     public Typo(String text) throws IllegalArgumentException, IOException {
-        _logger.info(String.format("Typo constructor: text %s", text));
+        _logger.info(String.format("api.Typo constructor: text %s", text));
         this.text = LangProxy.normalize(text, getSpanSize());
         if (!isAcceptable(text, this.text)) {
             throw new IllegalArgumentException(String.format(
@@ -36,17 +35,16 @@ public class Typo {
         return text.equals(normalized);
     }
 
-    public Tuple2<String, String> encode(String values) throws IllegalArgumentException, IOException, ValueError {
+    public EncodeResult encode(String values) throws IllegalArgumentException, IOException, ValueError {
         var tmp = encode_encoder(values, getBuckets().getSpaces(), getBuckets().getBits());
-        return new Tuple2<>(encode(tmp._1()), tmp._2());
+        return new EncodeResult(_encode(tmp.bit_values()), tmp.remaining_bits());
     }
 
-    public static Tuple2<String, String> decode(String text) throws IOException {
-        var tmp = decode(text, null);
-        return new Tuple2<String, String>(tmp._1(), tmp._3());
+    public static DecoderResult decode(String text) throws IOException {
+        return decode(text, null);
     }
 
-    public String encode(List<Integer> values) throws IllegalArgumentException, IOException {
+    public String _encode(List<Integer> values) throws IllegalArgumentException, IOException {
         _logger.debugSeparatorStart();
         var spaces = getBuckets().getSpaces();
         if (values.size() > spaces.size()) {
@@ -60,7 +58,7 @@ public class Typo {
         }
 
         String result = this.text;
-        _logger.debug("Typo.encode: encoding " + values + " in '" + this.text + "'");
+        _logger.debug("api.Typo.encode: encoding " + values + " in '" + this.text + "'");
         _logger.debug("Phase 0: " + result);
         for (int i = values.size() - 1; i >= 0; i--) {
             if (values.get(i) != 0)
@@ -73,7 +71,7 @@ public class Typo {
         return result;
     }
 
-    public static Tuple3<String, List<Integer>, String> decode(String text, Typo test_self)
+    public static DecoderResult decode(String text, Typo test_self)
             throws IOException {
         String original = LangProxy.normalize(text, getSpanSize());
         _logger.info("original=" + original);
@@ -88,7 +86,7 @@ public class Typo {
             t = new Typo(original);
         }
         var values = t._decode(text, test_self);
-        return new Tuple3<>(original, values, Typo.decode_decoder(values, t.getBuckets().getSpaces(), t.getBuckets().getBits()));
+        return new DecoderResult(original, values, Typo.decode_decoder(values, t.getBuckets().getSpaces(), t.getBuckets().getBits()));
     }
 
     public List<Integer> _decode(String text, Typo test) throws IOException {
@@ -100,7 +98,7 @@ public class Typo {
         List<Integer> values = new ArrayList<>(Collections.nCopies(spaces.size(), 0));
         for (int i = 0; i < spaces.size(); i++) {
             for (int j = 0; j < spaces.get(i); j++) {
-                var dif = util.diff(text, a_self.encode(values));
+                var dif = util.diff(text, a_self._encode(values));
                 if (dif.size() == cnt - 1) {
                     _logger.debug("values=" + values);
                     _logger.debug("dif=" + dif);
@@ -121,7 +119,7 @@ public class Typo {
         return (int) Math.pow((double) b, (double) e);
     }
 
-    public static Tuple2<List<Integer>, String> encode_encoder(String bytes_str, List<Integer> spaces,
+    public static EncodeEncoderResult encode_encoder(String bytes_str, List<Integer> spaces,
             List<Integer> bits_list)
             throws ValueError, IOException {
         if (!new HashSet<>(Arrays.asList('0', '1'))
@@ -156,11 +154,17 @@ public class Typo {
                 bit_values.add(0);
             }
         }
-        return new Tuple2<>(bit_values, remaining_bits);
+        return new EncodeEncoderResult(bit_values, remaining_bits);
     }
 
-    public static String decode_decoder(List<Integer> values, List<Integer> spaces, List<Integer> bits_list)
-            throws IOException {
+    /**
+     *
+     * @param values is the actual encoded values
+     * @param spaces is the space of the bucket
+     * @param bits_list is the bits size of the bucket
+     * @return returns bits string
+     */
+    public static String decode_decoder(List<Integer> values, List<Integer> spaces, List<Integer> bits_list) {
         // _logger.trace(
         // String.format("decode_decoder(values: %s, bits_list: %s)", values.toString(),
         // bits_list.toString()));

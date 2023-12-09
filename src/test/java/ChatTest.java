@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import api.Typo;
+import api.ValueError;
 import common.Config;
 import common.Logger;
 import common.util;
@@ -84,8 +86,8 @@ public class ChatTest {
 			var bytes_str = TypoTest.generateRandomBitStream(30);
 			_logger.trace("bytes_str", bytes_str);
 			var values_rem = Typo.encode_encoder(bytes_str, spaces, getBitsFromSpaces(spaces));
-			var values = values_rem._1;
-			var rem = values_rem._2;
+			var values = values_rem.bit_values();
+			var rem = values_rem.remaining_bits()	;
 			_logger.trace("values", values);
 			_logger.trace("rem", rem);
 			var des = Typo.decode_decoder(values, spaces, getBitsFromSpaces(spaces));

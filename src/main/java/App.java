@@ -1,4 +1,6 @@
 
+import api.Typo;
+import api.ValueError;
 import common.Config;
 import common.Logger;
 
@@ -21,7 +23,7 @@ public class App {
         String string;
         String bytes;
         Typo typo;
-        System.setOut(new PrintStream(System.out, true, "UTF-8"));
+        System.setOut(new PrintStream(System.out, true, StandardCharsets.UTF_8));
         try (Scanner scanner = new Scanner(System.in, StandardCharsets.UTF_8.name())) {
             while (true) {
                 command = scanner.nextLine();
@@ -31,13 +33,13 @@ public class App {
                     bytes = scanner.nextLine();
                     typo = getTypo(string);
                     var encoded_rem = typo.encode(bytes);
-                    System.out.println(to64(encoded_rem._1()));
-                    System.out.println(encoded_rem._2);
+                    System.out.println(to64(encoded_rem.encoded()));
+                    System.out.println(encoded_rem.remaining_bits());
                 } else if (command.equalsIgnoreCase("decode")) {
-                    var originalText_values_bits = Typo.decode(string, null);
-                    var originalText = originalText_values_bits._1();
+                    var result = Typo.decode(string, null);
+                    var originalText = result.Original();
                     System.out.println(to64(originalText));
-                    System.out.println(originalText_values_bits._3());
+                    System.out.println(result.bits());
                 } else if (command.equalsIgnoreCase("echo")) {
                     System.out.println(to64(string));
                 }

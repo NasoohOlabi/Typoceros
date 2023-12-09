@@ -11,6 +11,9 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 //
+import api.DecoderResult;
+import api.Typo;
+import api.ValueError;
 import common.Config;
 import common.Logger;
 import common.StringSpans;
@@ -142,39 +145,39 @@ public class TypoTest {
         _logger.info("text='" + text + "'");
         _logger.info("bytes='" + bytes + "'");
         var typo = new Typo(text);
-        _logger.info("typo.spaces\t" + typo.getSpaces().toString());
-        var byteList_rem = Typo.encode_encoder(bytes, typo.getSpaces(), typo.getBits());
-        var byteList = byteList_rem._1;
-        var rem = byteList_rem._2;
+        _logger.info("typo.spaces\t" + typo.getBuckets().getSpaces().toString());
+        var byteList_rem = Typo.encode_encoder(bytes, typo.getBuckets().getSpaces(), typo.getBuckets().getBits());
+        var byteList = byteList_rem.bit_values();
+        var rem = byteList_rem.remaining_bits();
         _logger.info("byteList_rem\t" + byteList_rem.toString());
-        var encoded = typo.encode(byteList);
+        var encoded = typo._encode(byteList);
         _logger.info("encoded\t" + encoded);
         var decoded_bits = Typo.decode(encoded, typo);
         _logger.info("decoded_byteList\t" + decoded_bits);
         Timer.prettyPrint("TypoTest.testString", _logger);
 
-        assertEquals(text, text, decoded_bits._1);
-        assertEquals(bytes, decoded_bits._3 + rem);
-        return decoded_bits._3.length();
+        assertEquals(text, text, decoded_bits.Original());
+        assertEquals(bytes, decoded_bits.bits() + rem);
+        return decoded_bits.bits().length();
     }
 
     public void testStringExtensive(String text) throws ValueError, IOException {
         _logger.info("#".repeat(25) + "\nTest String\n" + "#".repeat(25));
         _logger.info("text='" + text + "'");
         var typo = new Typo(text);
-        _logger.info("typo.spaces\t" + typo.getSpaces().toString());
+        _logger.info("typo.spaces\t" + typo.getBuckets().getSpaces().toString());
         final String sep = "v".repeat(55);
-        spacesTest(typo.getSpaces(), 140).forEach(values -> {
+        spacesTest(typo.getBuckets().getSpaces(), 140).forEach(values -> {
             _logger.info(sep);
             _logger.info("values: " + values);
             String encoded = null;
             try {
-                encoded = typo.encode(values);
+                encoded = typo._encode(values);
             } catch (IOException e) {
                 _logger.error("testStringExtensive", e);
             }
             _logger.info("encoded\t" + encoded);
-            Tuple3<String, List<Integer>, String> decoded_byteList = null;
+            DecoderResult decoded_byteList = null;
             try {
                 decoded_byteList = Typo.decode(encoded, typo);
             } catch (IOException e) {
@@ -183,12 +186,10 @@ public class TypoTest {
             _logger.info("decoded_byteList\t" + decoded_byteList);
 
             assert decoded_byteList != null;
-            if (decoded_byteList != null) {
-                assertEquals(text, decoded_byteList._1);
-                assertEquals(values.size(), decoded_byteList._2.size());
-                for (int i = 0; i < values.size(); i++) {
-                    assertEquals(values.get(i), decoded_byteList._2.get(i));
-                }
+            assertEquals(text, decoded_byteList.Original());
+            assertEquals(values.size(), decoded_byteList.values().size());
+            for (int i = 0; i < values.size(); i++) {
+                assertEquals(values.get(i), decoded_byteList.values().get(i));
             }
         });
     }
@@ -208,7 +209,7 @@ public class TypoTest {
     // examples) {
     // try {
     // testString(ex, generateRandomBitStream(ex.length(), 0), false);
-    // } catch (ValueError | IOException e) {
+    // } catch (api.ValueError | IOException e) {
     // _logger.error("testControl", e);
     // }
     // }
