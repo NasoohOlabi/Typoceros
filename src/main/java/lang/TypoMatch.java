@@ -49,4 +49,20 @@ public class TypoMatch implements Comparable<TypoMatch> {
     public int compareTo(@NotNull TypoMatch o) {
         return this.sourceSpan.compareTo(o.sourceSpan);
     }
+
+    public String getText() {
+        return text;
+    }
+
+    public String getAfter() {
+        return after;
+    }
+
+    public Span getSourceSpan() {
+        return sourceSpan;
+    }
+
+    public Function<String, String> getMakeTypoInOriginal() {
+        return makeTypoInOriginal;
+    }
 }

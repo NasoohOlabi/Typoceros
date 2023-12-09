@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import common.Buckets;
 import common.Logger;
 import common.Span;
 import common.util;
@@ -18,82 +19,8 @@ import lang.TypoMatch;
 public class Typo {
     private final static Logger _logger = Logger.named("Typo");
     private final String text;
-    private List<TypoMatch> _slots = null;
-    private List<Integer> _spaces = null;
-    private List<Span> _chunks = null;
+    private Buckets<TypoMatch> buckets;
     private static int span_size = 10;
-
-    public int getLength() throws IOException {
-        return getSlots().size();
-    }
-
-    public List<TypoMatch> getSlots() throws IOException {
-        if (this._slots == null) {
-            _logger.info("generating slots!");
-            this._slots = LangProxy.valid_rules_scan(this.text, span_size);
-        }
-        return this._slots;
-    }
-
-    public TypoMatch getSlot(int idx) throws IOException {
-        return getSlots().get(idx);
-    }
-
-    public TypoMatch getSlot(int space, int offset) throws IOException {
-        assert offset != 0;
-        return getSlots().get(getSlotIdx(space, offset));
-    }
-
-    public List<Span> getChunks() {
-        if (_chunks == null) {
-            var span_size = getSpanSize();
-            _chunks = util.chunk(text, span_size);
-        }
-        return _chunks;
-    }
-
-    public List<Integer> getSpaces() throws IOException {
-        if (_spaces != null) {
-            return _spaces;
-        }
-        _logger.info("generating Spaces");
-        var sentenceRanges = getChunks();
-
-        // Initialize an empty list of buckets
-        int numBuckets = sentenceRanges.size();
-        List<Integer> buckets = new ArrayList<>(Arrays.asList(new Integer[numBuckets]));
-        Collections.fill(buckets, 0);
-
-        // Iterate through each element range and put it in the corresponding bucket
-        for (int i = 0; i < this.getSlots().size(); i++) {
-            var slot = this.getSlots().get(i).sourceSpan;
-            int start = slot.start;
-            int end = slot.end;
-            for (int j = 0; j < sentenceRanges.size(); j++) {
-                var sentenceRange = sentenceRanges.get(j);
-                int sentStart = sentenceRange.start;
-                int sentEnd = sentenceRange.end;
-                if (sentStart <= start && start < sentEnd && sentStart < end && end <= sentEnd) {
-                    buckets.set(j, buckets.get(j) + 1);
-                    break;
-                }
-            }
-        }
-        _spaces = buckets;
-        _logger.info("Spaces=" + _spaces.toString());
-
-        return buckets;
-    }
-
-    public List<Integer> getBits() throws IOException {
-        var bits = getSpaces().stream().map(util::log2).collect(Collectors.toList());
-        _logger.info("Bits=" + bits.toString());
-        return bits;
-    }
-
-    public Integer getBits(int i) throws IOException {
-        return getBits().get(i);
-    }
 
     public Typo(String text) throws IllegalArgumentException, IOException {
         _logger.info(String.format("Typo constructor: text %s", text));
@@ -109,23 +36,8 @@ public class Typo {
         return text.equals(normalized);
     }
 
-    public boolean isAcceptable(String text) throws IOException {
-        return text.equals(LangProxy.normalize(text, getSpanSize()));
-    }
-
-    public String FixText(String text) throws IOException {
-        return LangProxy.normalize(text, getSpanSize());
-    }
-
-    public int getSlotIdx(int space, int offset) throws IOException {
-        if (offset == 0) {
-            return 0;
-        }
-        return util.sum(this.getSpaces().subList(0, space)) + offset - 1;
-    }
-
     public Tuple2<String, String> encode(String values) throws IllegalArgumentException, IOException, ValueError {
-        var tmp = encode_encoder(values, getSpaces(), getBits());
+        var tmp = encode_encoder(values, getBuckets().getSpaces(), getBuckets().getBits());
         return new Tuple2<>(encode(tmp._1()), tmp._2());
     }
 
@@ -136,7 +48,7 @@ public class Typo {
 
     public String encode(List<Integer> values) throws IllegalArgumentException, IOException {
         _logger.debugSeparatorStart();
-        var spaces = this.getSpaces();
+        var spaces = getBuckets().getSpaces();
         if (values.size() > spaces.size()) {
             throw new IllegalArgumentException("Can't encode");
         }
@@ -152,7 +64,7 @@ public class Typo {
         _logger.debug("Phase 0: " + result);
         for (int i = values.size() - 1; i >= 0; i--) {
             if (values.get(i) != 0)
-                result = getSlot(i, values.get(i)).makeTypoInOriginal.apply(result);
+                result = getBuckets().getSlot(i, values.get(i)).makeTypoInOriginal.apply(result);
             _logger.debug("Phase "
                     + (values.size() - i)
                     + ": " + result);
@@ -176,12 +88,12 @@ public class Typo {
             t = new Typo(original);
         }
         var values = t._decode(text, test_self);
-        return new Tuple3<>(original, values, Typo.decode_decoder(values, t.getSpaces(), t.getBits()));
+        return new Tuple3<>(original, values, Typo.decode_decoder(values, t.getBuckets().getSpaces(), t.getBuckets().getBits()));
     }
 
     public List<Integer> _decode(String text, Typo test) throws IOException {
         Typo a_self = test != null ? test : this;
-        var spaces = a_self.getSpaces();
+        var spaces = a_self.getBuckets().getSpaces();
         int cnt = util.diff(text, a_self.text).size();
         _logger.debug("cnt=" + cnt);
         _logger.debug("util.diff('" + text + "','" + a_self.text + "')=" + util.diff(text, a_self.text));
@@ -279,6 +191,15 @@ public class Typo {
 
     public static void setSpanSize(int value) {
         Typo.span_size = value;
+    }
+
+    public Buckets<TypoMatch> getBuckets() throws IOException {
+        if (buckets == null){
+            _logger.info("generating slots!");
+            var slots = LangProxy.valid_rules_scan(this.text, span_size);
+            buckets = new Buckets<>(util.chunk(text,span_size),slots,TypoMatch::getSourceSpan);
+        }
+        return buckets;
     }
 
 }
